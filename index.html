@@ -7,6 +7,48 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>TRAVEL Planning</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+// ============================================================
+// FIREBASE 初期化
+// ============================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, arrayUnion, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBkqPU9eB8SJImlv5LM2eq1DQQs9ALCBj4",
+  authDomain: "travel-planning-bdef5.firebaseapp.com",
+  projectId: "travel-planning-bdef5",
+  storageBucket: "travel-planning-bdef5.firebasestorage.app",
+  messagingSenderId: "147099236864",
+  appId: "1:147099236864:web:4e2f3d7562ba549d8376e5"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+// グローバルに公開（既存JSから参照できるよう）
+window._fb = { auth, db, googleProvider,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithPopup, signOut, updateProfile, onAuthStateChanged,
+  doc, setDoc, getDoc, collection, query, where, getDocs,
+  addDoc, updateDoc, arrayUnion, serverTimestamp, orderBy };
+
+// 認証状態の監視
+onAuthStateChanged(auth, user => {
+  if (user) {
+    window._currentUser = user;
+    showScreen('group');
+    loadGroups();
+  } else {
+    window._currentUser = null;
+    showScreen('login');
+  }
+});
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
@@ -585,6 +627,205 @@ input[type="time"].sched-time {
 /* ===== EMPTY ===== */
 .empty { text-align:center;padding:36px 20px;color:var(--textsub);font-size:0.85rem;opacity:0.7; }
 .empty .ico { font-size:2.4rem;margin-bottom:8px; }
+
+/* ========== 画面切替 ========== */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ========== ログイン画面 ========== */
+.auth-wrap {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 20px;
+}
+.auth-logo {
+  font-family: 'Nunito', sans-serif;
+  font-size: 2rem; font-weight: 800;
+  color: white; text-align: center;
+  letter-spacing: 0.06em;
+  margin-bottom: 28px;
+  line-height: 1.2;
+  text-shadow: 0 2px 12px rgba(0,60,100,0.2);
+}
+.auth-logo span { font-size: 1rem; font-weight: 400; letter-spacing: 0.18em; opacity: 0.85; }
+.auth-card {
+  width: 100%; max-width: 360px;
+  background: rgba(255,255,255,0.52);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255,255,255,0.75);
+  border-radius: 24px;
+  padding: 22px 20px;
+  box-shadow: 0 8px 32px rgba(30,120,170,0.18);
+}
+.auth-tab-row { display: flex; gap: 6px; margin-bottom: 16px; }
+#auth-tab-row { display: flex; gap: 6px; margin-bottom: 16px; }
+.auth-tab {
+  flex: 1; padding: 8px;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: 50px;
+  background: rgba(255,255,255,0.2);
+  color: var(--textsub);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.auth-tab.active {
+  background: rgba(255,255,255,0.75);
+  color: var(--deep);
+  border-color: rgba(255,255,255,0.9);
+}
+.btn-google {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 11px;
+  background: white;
+  border: 1.5px solid rgba(30,120,170,0.2);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+  margin-bottom: 14px;
+}
+.btn-google:active { background: #f5f5f5; }
+.auth-or {
+  text-align: center; position: relative;
+  margin: 4px 0 14px;
+  color: var(--textsub); font-size: 0.75rem;
+}
+.auth-or::before, .auth-or::after {
+  content: ''; position: absolute; top: 50%;
+  width: 42%; height: 1px;
+  background: rgba(30,120,170,0.2);
+}
+.auth-or::before { left: 0; }
+.auth-or::after  { right: 0; }
+.auth-inp { margin-bottom: 10px !important; }
+.btn-auth-submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--sea1), var(--sea2));
+  border: none; border-radius: 12px;
+  padding: 12px; color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.92rem; font-weight: 700;
+  cursor: pointer; margin-top: 2px;
+  box-shadow: 0 4px 14px rgba(46,163,204,0.3);
+  min-height: 44px;
+}
+.btn-auth-submit:active { opacity: 0.85; }
+.auth-error {
+  color: #cc3333; font-size: 0.78rem;
+  text-align: center; margin-top: 8px;
+  min-height: 18px;
+}
+
+/* ========== グループ画面 ========== */
+.group-wrap {
+  max-width: 480px; margin: 0 auto;
+  padding: 60px 16px 40px;
+  min-height: 100dvh;
+}
+.group-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.group-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.2rem; font-weight: 800;
+  color: white; letter-spacing: 0.05em;
+}
+.btn-signout {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 50px; padding: 5px 12px;
+  color: rgba(255,255,255,0.8);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem; font-weight: 600;
+  cursor: pointer;
+}
+.user-hello {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.78rem; margin-bottom: 18px;
+}
+.group-item {
+  background: rgba(255,255,255,0.48);
+  border: 1.5px solid rgba(255,255,255,0.72);
+  border-radius: 16px; padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.group-item:active { background: rgba(255,255,255,0.68); }
+.group-item-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--deep);
+}
+.group-item-code {
+  font-size: 0.68rem; color: var(--textsub);
+  margin-top: 2px;
+}
+.group-item-arrow { color: var(--sea1); font-size: 1.1rem; }
+.invite-badge {
+  background: rgba(46,163,204,0.15);
+  border: 1px solid rgba(46,163,204,0.3);
+  border-radius: 8px; padding: 6px 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem; font-weight: 800;
+  color: var(--deep); letter-spacing: 0.14em;
+  margin-top: 8px; text-align: center;
+}
+
+/* ========== 旅行一覧画面 ========== */
+.trips-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(255,255,255,0.52);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255,255,255,0.7);
+  padding: env(safe-area-inset-top,0px) 14px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: calc(env(safe-area-inset-top,0px) + 10px);
+}
+.btn-back {
+  background: rgba(255,255,255,0.4);
+  border: 1.5px solid rgba(255,255,255,0.7);
+  border-radius: 50px; padding: 6px 14px;
+  color: var(--deep);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  cursor: pointer;
+}
+.trips-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem; font-weight: 800;
+  color: var(--deep);
+}
+.trips-wrap {
+  max-width: 480px; margin: 0 auto;
+  padding: 72px 16px 40px;
+  min-height: 100dvh;
+}
+.trip-item {
+  background: rgba(255,255,255,0.48);
+  border: 1.5px solid rgba(255,255,255,0.72);
+  border-radius: 16px; padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.trip-item:active { background: rgba(255,255,255,0.68); }
+.trip-item-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--deep);
+}
+.trip-item-date { font-size: 0.72rem; color: var(--textsub); margin-top: 2px; }
+.trip-item-arrow { color: var(--sea1); font-size: 1.1rem; }
+
 </style>
 </head>
 <body>
@@ -592,8 +833,8 @@ input[type="time"].sched-time {
 <!-- HEADER -->
 <header class="hdr" id="hdr">
   <div class="hdr-top">
-    <!-- ① タイトル変更 -->
-    <div class="logo">✈ TRAVEL <em>Planning</em></div>
+    <button class="btn-back" onclick="backToTrips()" style="font-size:0.75rem;padding:5px 12px;">← 旅行一覧</button>
+    <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
 
@@ -618,6 +859,89 @@ input[type="time"].sched-time {
   </div>
 </header>
 
+<!-- ========== ログイン画面 ========== -->
+<div id="screen-login" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo">✈ TRAVEL<br><span>Planning</span></div>
+    <div class="auth-card">
+      <div id="auth-tab-row">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">ログイン</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">新規登録</button>
+      </div>
+
+      <!-- Googleログイン -->
+      <button class="btn-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Googleでログイン
+      </button>
+
+      <div class="auth-or"><span>または</span></div>
+
+      <div id="auth-form-login">
+        <input class="f-inp auth-inp" type="email" id="login-email" placeholder="メールアドレス">
+        <input class="f-inp auth-inp" type="password" id="login-pass" placeholder="パスワード">
+        <button class="btn-auth-submit" onclick="loginEmail()">ログイン</button>
+      </div>
+
+      <div id="auth-form-register" style="display:none">
+        <input class="f-inp auth-inp" type="text" id="reg-name" placeholder="表示名（ニックネーム）">
+        <input class="f-inp auth-inp" type="email" id="reg-email" placeholder="メールアドレス">
+        <input class="f-inp auth-inp" type="password" id="reg-pass" placeholder="パスワード（6文字以上）">
+        <button class="btn-auth-submit" onclick="registerEmail()">登録してはじめる</button>
+      </div>
+
+      <div id="auth-error" class="auth-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== グループ選択画面 ========== -->
+<div id="screen-group" class="screen" style="display:none">
+  <div class="group-wrap">
+    <div class="group-header">
+      <div class="group-title">✈ TRAVEL Planning</div>
+      <button class="btn-signout" onclick="doSignOut()">ログアウト</button>
+    </div>
+    <div class="user-hello" id="user-hello"></div>
+
+    <div class="g-card" style="margin-bottom:12px;">
+      <div class="card-head">グループを作成</div>
+      <input class="f-inp" type="text" id="new-group-name" placeholder="グループ名（例：沖縄旅行メンバー）" style="margin-bottom:10px;">
+      <div class="add-center"><button class="btn-add" onclick="createGroup()">＋ グループを作成</button></div>
+    </div>
+
+    <div class="g-card" style="margin-bottom:12px;">
+      <div class="card-head">招待コードで参加</div>
+      <input class="f-inp" type="text" id="invite-code-inp" placeholder="招待コードを入力（例：X7K2P9）" style="margin-bottom:10px;text-transform:uppercase;letter-spacing:0.1em;">
+      <div class="add-center"><button class="btn-add" onclick="joinGroup()">グループに参加</button></div>
+    </div>
+
+    <div class="card-head" style="color:white;margin:16px 4px 8px;font-size:0.9rem;">参加中のグループ</div>
+    <div id="group-list"><div class="empty"><div class="ico">👥</div>グループがありません</div></div>
+  </div>
+</div>
+
+<!-- ========== 旅行一覧画面 ========== -->
+<div id="screen-trips" class="screen" style="display:none">
+  <div class="trips-header">
+    <button class="btn-back" onclick="showScreen('group')">← グループ</button>
+    <div class="trips-title" id="trips-group-name"></div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="trips-wrap">
+    <div class="g-card" style="margin-bottom:12px;">
+      <div class="card-head">新しい旅行を作成</div>
+      <input class="f-inp" type="text" id="new-trip-name" placeholder="旅行名（例：沖縄旅行2025）" style="margin-bottom:10px;">
+      <div class="add-center"><button class="btn-add" onclick="createTrip()">＋ 旅行を作成</button></div>
+    </div>
+    <div class="card-head" style="color:white;margin:4px 4px 8px;font-size:0.9rem;">旅行の履歴</div>
+    <div id="trip-list"><div class="empty"><div class="ico">✈️</div>旅行がありません</div></div>
+  </div>
+</div>
+
+
+<!-- ========== メインアプリ ========== -->
+<div id="screen-app" class="screen" style="display:none">
 <!-- SCROLL AREA -->
 <div class="scroll-area" id="scroll-area">
 
@@ -747,6 +1071,7 @@ function updateHdr(){
   }
 
   adjustScrollPadding();
+  saveTrip();
 }
 
 function syncDays(){
@@ -888,7 +1213,7 @@ function renderSched(){
 function delSched(idx){
   if(!confirm('この予定を削除しますか？')) return;
   schedData[curDay].splice(idx,1);
-  renderSched();
+  renderSched(); saveTrip();
 }
 
 // === PACKING ===
@@ -918,8 +1243,8 @@ function renderPack(){
     list.appendChild(d);
   });
 }
-function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); }
-function delPack(i){ packItems.splice(i,1); renderPack(); }
+function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); saveTrip(); }
+function delPack(i){ packItems.splice(i,1); renderPack(); saveTrip(); }
 function filterCat(cat,el){
   catFilter=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
@@ -928,11 +1253,11 @@ function filterCat(cat,el){
 function addPack(){
   const inp=document.getElementById('new-pack'), cat=document.getElementById('new-pack-cat').value;
   if(!inp.value.trim()) return;
-  packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack();
+  packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack(); saveTrip();
 }
 
 // === SPOTS ===
-function addSpot(){ spots.push({name:'',address:'',memo:'',type:''}); renderSpots(); }
+function addSpot(){ spots.push({name:'',address:'',memo:'',type:''}); renderSpots(); saveTrip(); }
 function renderSpots(){
   const list=document.getElementById('spots-list');
   if(!spots.length){ list.innerHTML='<div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>'; return; }
@@ -955,7 +1280,7 @@ function setType(idx,type,el){
   el.closest('.spot-types').querySelectorAll('.spot-type-tag').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
-function delSpot(idx){ spots.splice(idx,1); renderSpots(); }
+function delSpot(idx){ spots.splice(idx,1); renderSpots(); saveTrip(); }
 
 // === TABS ===
 function showTab(name,btn){
@@ -1007,10 +1332,264 @@ async function exportPDF(){
   doc.save(`travel_${dest||'plan'}.pdf`);
 }
 
+
+// ============================================================
+// 画面管理
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+    s.classList.remove('active');
+  });
+  const el = document.getElementById('screen-' + name);
+  if (el) { el.style.display = 'block'; el.classList.add('active'); }
+  if (name === 'app') requestAnimationFrame(adjustScrollPadding);
+}
+
+// ============================================================
+// 認証
+// ============================================================
+function switchAuthTab(tab, btn) {
+  document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('auth-form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('auth-error').textContent = '';
+}
+
+function showAuthError(msg) {
+  document.getElementById('auth-error').textContent = msg;
+}
+
+async function loginGoogle() {
+  try {
+    const { auth, googleProvider, signInWithPopup } = window._fb;
+    await signInWithPopup(auth, googleProvider);
+  } catch(e) {
+    showAuthError('Googleログインに失敗しました');
+  }
+}
+
+async function loginEmail() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) { showAuthError('メールとパスワードを入力してください'); return; }
+  try {
+    const { auth, signInWithEmailAndPassword } = window._fb;
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    showAuthError('メールアドレスまたはパスワードが違います');
+  }
+}
+
+async function registerEmail() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  if (!name || !email || !pass) { showAuthError('すべての項目を入力してください'); return; }
+  if (pass.length < 6) { showAuthError('パスワードは6文字以上にしてください'); return; }
+  try {
+    const { auth, createUserWithEmailAndPassword, updateProfile } = window._fb;
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+  } catch(e) {
+    if (e.code === 'auth/email-already-in-use') showAuthError('このメールアドレスは既に使われています');
+    else showAuthError('登録に失敗しました: ' + e.message);
+  }
+}
+
+async function doSignOut() {
+  const { auth, signOut } = window._fb;
+  await signOut(auth);
+}
+
+// ============================================================
+// グループ管理
+// ============================================================
+let _currentGroupId   = null;
+let _currentGroupName = null;
+
+async function loadGroups() {
+  if (!window._currentUser) return;
+  const { db, collection, query, where, getDocs } = window._fb;
+  const uid = window._currentUser.uid;
+  const name = window._currentUser.displayName || window._currentUser.email;
+  document.getElementById('user-hello').textContent = `こんにちは、${name} さん 👋`;
+
+  const q = query(collection(db, 'groups'), where('members', 'array-contains', uid));
+  const snap = await getDocs(q);
+  const list = document.getElementById('group-list');
+  if (snap.empty) {
+    list.innerHTML = '<div class="empty"><div class="ico">👥</div>グループがありません<br>作成または参加してください</div>';
+    return;
+  }
+  list.innerHTML = '';
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const div = document.createElement('div');
+    div.className = 'group-item';
+    div.innerHTML = `
+      <div>
+        <div class="group-item-name">${d.name}</div>
+        <div class="group-item-code">招待コード: <b>${d.inviteCode}</b></div>
+      </div>
+      <div class="group-item-arrow">›</div>`;
+    div.onclick = () => openGroup(docSnap.id, d.name);
+    list.appendChild(div);
+  });
+}
+
+function genCode(len=6) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:len}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+async function createGroup() {
+  const name = document.getElementById('new-group-name').value.trim();
+  if (!name) { alert('グループ名を入力してください'); return; }
+  const { db, collection, addDoc, serverTimestamp } = window._fb;
+  const uid = window._currentUser.uid;
+  const inviteCode = genCode();
+  await addDoc(collection(db, 'groups'), {
+    name, inviteCode,
+    members: [uid],
+    createdBy: uid,
+    createdAt: serverTimestamp()
+  });
+  document.getElementById('new-group-name').value = '';
+  loadGroups();
+}
+
+async function joinGroup() {
+  const code = document.getElementById('invite-code-inp').value.trim().toUpperCase();
+  if (!code) { alert('招待コードを入力してください'); return; }
+  const { db, collection, query, where, getDocs, doc, updateDoc, arrayUnion } = window._fb;
+  const uid = window._currentUser.uid;
+  const q = query(collection(db, 'groups'), where('inviteCode', '==', code));
+  const snap = await getDocs(q);
+  if (snap.empty) { alert('招待コードが見つかりません'); return; }
+  const groupDoc = snap.docs[0];
+  const data = groupDoc.data();
+  if (data.members.includes(uid)) { alert('すでにこのグループに参加しています'); return; }
+  await updateDoc(doc(db, 'groups', groupDoc.id), { members: arrayUnion(uid) });
+  document.getElementById('invite-code-inp').value = '';
+  alert(`「${data.name}」に参加しました！`);
+  loadGroups();
+}
+
+async function openGroup(groupId, groupName) {
+  _currentGroupId   = groupId;
+  _currentGroupName = groupName;
+  document.getElementById('trips-group-name').textContent = groupName;
+  showScreen('trips');
+  loadTrips();
+}
+
+// ============================================================
+// 旅行一覧
+// ============================================================
+let _currentTripId = null;
+
+async function loadTrips() {
+  if (!_currentGroupId) return;
+  const { db, collection, query, where, getDocs, orderBy } = window._fb;
+  const q = query(
+    collection(db, 'trips'),
+    where('groupId', '==', _currentGroupId),
+    orderBy('createdAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  const list = document.getElementById('trip-list');
+  if (snap.empty) {
+    list.innerHTML = '<div class="empty"><div class="ico">✈️</div>旅行がありません<br>新しい旅行を作成してください</div>';
+    return;
+  }
+  list.innerHTML = '';
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const div = document.createElement('div');
+    div.className = 'trip-item';
+    const date = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('ja-JP') : '';
+    div.innerHTML = `
+      <div>
+        <div class="trip-item-name">${d.name}</div>
+        <div class="trip-item-date">${date}</div>
+      </div>
+      <div class="trip-item-arrow">›</div>`;
+    div.onclick = () => openTrip(docSnap.id, d);
+    list.appendChild(div);
+  });
+}
+
+async function createTrip() {
+  const name = document.getElementById('new-trip-name').value.trim();
+  if (!name) { alert('旅行名を入力してください'); return; }
+  const { db, collection, addDoc, serverTimestamp } = window._fb;
+  const ref = await addDoc(collection(db, 'trips'), {
+    name, groupId: _currentGroupId,
+    createdBy: window._currentUser.uid,
+    createdAt: serverTimestamp(),
+    scheduleData: {}, packItems: [], spots: []
+  });
+  document.getElementById('new-trip-name').value = '';
+  openTrip(ref.id, { name, scheduleData:{}, packItems:[], spots:[] });
+}
+
+async function openTrip(tripId, data) {
+  _currentTripId = tripId;
+  // Firestoreのデータをアプリの変数に反映
+  schedData  = data.scheduleData || {};
+  packItems  = data.packItems    || [...DEF_PACKS];
+  spots      = data.spots        || [];
+  totalDays  = 1; curDay = 1;
+  schedEditMode = false;
+
+  // ヘッダーに旅行名を反映
+  document.getElementById('dest').value       = data.dest       || '';
+  document.getElementById('start-date').value = data.startDate  || '';
+  document.getElementById('end-date').value   = data.endDate    || '';
+  document.getElementById('members').value    = data.members    || '';
+  document.getElementById('hotel').value      = data.hotel      || '';
+  document.getElementById('trip-memo').value  = data.tripMemo   || '';
+  updateHdr(); syncDays();
+
+  showScreen('app');
+  renderDays(); renderPack(); renderSpots();
+}
+
+// Firestoreへの保存（概要変更・予定追加など都度呼ぶ）
+async function saveTrip() {
+  if (!_currentTripId) return;
+  const { db, doc, setDoc } = window._fb;
+  await setDoc(doc(db, 'trips', _currentTripId), {
+    groupId:      _currentGroupId,
+    name:         document.getElementById('new-trip-name')?.value || _currentGroupName,
+    dest:         document.getElementById('dest').value,
+    startDate:    document.getElementById('start-date').value,
+    endDate:      document.getElementById('end-date').value,
+    members:      document.getElementById('members').value,
+    hotel:        document.getElementById('hotel').value,
+    tripMemo:     document.getElementById('trip-memo').value,
+    scheduleData: schedData,
+    packItems:    packItems,
+    spots:        spots,
+    createdBy:    window._currentUser?.uid || '',
+  }, { merge: true });
+}
+
+// アプリ画面の「← グループ」ボタン用
+function backToTrips() {
+  showScreen('trips');
+  loadTrips();
+}
+
 // === INIT ===
-renderDays(); renderPack(); renderSpots();
+// 初期表示はlogin（Firebase認証監視で自動切替）
+showScreen('login');
+// DEF_PACKSをここで定義しておく（openTripから参照）
 // ⑥ DOM描画後にヘッダー高さを計測してpadding調整
 requestAnimationFrame(adjustScrollPadding);
 </script>
+</div><!-- /screen-app -->
 </body>
 </html>
