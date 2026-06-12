@@ -817,7 +817,8 @@ input[type="time"].sched-time {
       </div>
 
       <div id="auth-form-register" style="display:none">
-        <input class="f-inp auth-inp" type="text" id="reg-name" placeholder="表示名（ニックネーム）">
+        <input class="f-inp auth-inp" type="text" id="reg-family" placeholder="苗字（例：山田）">
+        <input class="f-inp auth-inp" type="text" id="reg-name" placeholder="ニックネーム（例：パパ）">
         <input class="f-inp auth-inp" type="email" id="reg-email" placeholder="メールアドレス">
         <input class="f-inp auth-inp" type="password" id="reg-pass" placeholder="パスワード（6文字以上）">
         <button class="btn-auth-submit" onclick="registerEmail()">登録してはじめる</button>
@@ -921,6 +922,7 @@ input[type="time"].sched-time {
   <!-- 持ち物 -->
   <div class="panel" id="panel-packing">
     <div class="g-card">
+      <div id="family-label" style="font-family:'Nunito',sans-serif;font-size:0.88rem;font-weight:700;color:var(--deep);margin-bottom:12px;padding:6px 10px;background:rgba(255,255,255,0.45);border:1px solid rgba(255,255,255,0.7);border-radius:10px;display:inline-block;">持ち物リスト</div>
       <div class="cat-scroll">
         <div class="cat-chip active" onclick="filterCat('all',this)">すべて</div>
         <div class="cat-chip" onclick="filterCat('衣類',this)">👕 衣類</div>
@@ -978,49 +980,60 @@ input[type="time"].sched-time {
 
 <script>
 // ============================================================
-// Firebase 初期化（compat版）
+// Firebase 初期化（compat版）- DOMContentLoaded後に確実に実行
 // ============================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBkqPU9eB8SJImlv5LM2eq1DQQs9ALCBj4",
-  authDomain: "travel-planning-bdef5.firebaseapp.com",
-  projectId: "travel-planning-bdef5",
-  storageBucket: "travel-planning-bdef5.firebasestorage.app",
-  messagingSenderId: "147099236864",
-  appId: "1:147099236864:web:4e2f3d7562ba549d8376e5"
-};
-firebase.initializeApp(firebaseConfig);
-const _auth = firebase.auth();
-const _db   = firebase.firestore();
+let _auth, _db;
 
-// 認証状態の監視（通常scriptなので直接関数を呼べる）
-_auth.onAuthStateChanged(async user => {
-  if (user) {
-    window._currentUser = user;
-    // usersコレクションに登録・更新
-    const userRef = _db.collection('users').doc(user.uid);
-    const userSnap = await userRef.get();
-    const displayName = user.displayName || user.email;
-    if (!userSnap.exists) {
-      await userRef.set({
-        displayName,
-        email: user.email,
-        isAdmin: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } else if (user.displayName && userSnap.data().displayName !== user.displayName) {
-      await userRef.update({ displayName: user.displayName });
-    }
-    showScreen('group');
-    loadGroups();
-  } else {
-    window._currentUser = null;
-    showScreen('login');
+function initFirebase() {
+  if (typeof firebase === 'undefined') {
+    // まだ読み込まれていない場合は少し待つ
+    setTimeout(initFirebase, 100);
+    return;
   }
-});
+  if (firebase.apps.length === 0) {
+    firebase.initializeApp({
+      apiKey: "AIzaSyBkqPU9eB8SJImlv5LM2eq1DQQs9ALCBj4",
+      authDomain: "travel-planning-bdef5.firebaseapp.com",
+      projectId: "travel-planning-bdef5",
+      storageBucket: "travel-planning-bdef5.firebasestorage.app",
+      messagingSenderId: "147099236864",
+      appId: "1:147099236864:web:4e2f3d7562ba549d8376e5"
+    });
+  }
+  _auth = firebase.auth();
+  _db   = firebase.firestore();
+
+  // 認証状態の監視
+  _auth.onAuthStateChanged(async user => {
+    if (user) {
+      window._currentUser = user;
+      const userRef = _db.collection('users').doc(user.uid);
+      const userSnap = await userRef.get();
+      const displayName = user.displayName || user.email;
+      if (!userSnap.exists) {
+        await userRef.set({
+          displayName,
+          email: user.email,
+          isAdmin: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } else if (user.displayName && userSnap.data().displayName !== user.displayName) {
+        await userRef.update({ displayName: user.displayName });
+      }
+      showScreen('group');
+      loadGroups();
+    } else {
+      window._currentUser = null;
+      showScreen('login');
+    }
+  });
+}
 
 // === STATE ===
 let curDay=1, totalDays=1;
 let schedData={}, packItems=[], spots=[], catFilter='all';
+let _myFamilyName = '';  // 自分の苗字
+let _currentTripPackingRef = null;  // Firestoreの持ち物参照
 
 const SPOT_ACCENTS=[
   'linear-gradient(90deg,#5bbfe0,#2ea3cc)',
@@ -1240,8 +1253,8 @@ function renderPack(){
     list.appendChild(d);
   });
 }
-function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); saveTrip(); }
-function delPack(i){ packItems.splice(i,1); renderPack(); saveTrip(); }
+function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); savePacking(); }
+function delPack(i){ packItems.splice(i,1); renderPack(); savePacking(); }
 function filterCat(cat,el){
   catFilter=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
@@ -1250,7 +1263,7 @@ function filterCat(cat,el){
 function addPack(){
   const inp=document.getElementById('new-pack'), cat=document.getElementById('new-pack-cat').value;
   if(!inp.value.trim()) return;
-  packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack(); saveTrip();
+  packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack(); savePacking();
 }
 
 // === SPOTS ===
@@ -1383,16 +1396,26 @@ async function loginEmail() {
 }
 
 async function registerEmail() {
-  const name  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  if (!name || !email || !pass) { showAuthError('すべての項目を入力してください'); return; }
+  const family = document.getElementById('reg-family').value.trim();
+  const name   = document.getElementById('reg-name').value.trim();
+  const email  = document.getElementById('reg-email').value.trim();
+  const pass   = document.getElementById('reg-pass').value;
+  if (!family || !name || !email || !pass) { showAuthError('すべての項目を入力してください'); return; }
   if (pass.length < 6) { showAuthError('パスワードは6文字以上にしてください'); return; }
   try {
+    const displayName = `${family} ${name}`;
     const cred = await _auth.createUserWithEmailAndPassword(email, pass);
-    await cred.user.updateProfile({ displayName: name });
+    await cred.user.updateProfile({ displayName });
     await cred.user.reload();
     window._currentUser = _auth.currentUser;
+    // Firestoreにfamily名を保存（onAuthStateChangedより前に確実に書き込む）
+    await _db.collection('users').doc(cred.user.uid).set({
+      displayName,
+      familyName: family,
+      email,
+      isAdmin: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
   } catch(e) {
     if (e.code === 'auth/email-already-in-use') showAuthError('このメールアドレスは既に使われています');
     else showAuthError('登録に失敗しました: ' + e.message);
@@ -1548,27 +1571,40 @@ async function createTrip() {
 async function openTrip(tripId, data) {
   _currentTripId = tripId;
   _currentTripName = data.name || '';
-  // Firestoreのデータをアプリの変数に反映
   schedData  = data.scheduleData || {};
-  packItems  = data.packItems    || [...DEF_PACKS];
   spots      = data.spots        || [];
   totalDays  = 1; curDay = 1;
   schedEditMode = false;
 
-  // ヘッダーに旅行名を反映
-  document.getElementById('dest').value       = data.dest       || '';
-  document.getElementById('start-date').value = data.startDate  || '';
-  document.getElementById('end-date').value   = data.endDate    || '';
-  document.getElementById('members').value    = data.members    || '';
-  document.getElementById('hotel').value      = data.hotel      || '';
-  document.getElementById('trip-memo').value  = data.tripMemo   || '';
+  document.getElementById('dest').value       = data.dest      || '';
+  document.getElementById('start-date').value = data.startDate || '';
+  document.getElementById('end-date').value   = data.endDate   || '';
+  document.getElementById('members').value    = data.members   || '';
+  document.getElementById('hotel').value      = data.hotel     || '';
+  document.getElementById('trip-memo').value  = data.tripMemo  || '';
   updateHdr(); syncDays();
+
+  // 自分の苗字をusersから取得して持ち物をロード
+  const uid = window._currentUser.uid;
+  const userSnap = await _db.collection('users').doc(uid).get();
+  _myFamilyName = userSnap.exists ? (userSnap.data().familyName || '') : '';
+
+  // 持ち物はサブコレクション trips/{id}/packing/{familyName}
+  _currentTripPackingRef = _db
+    .collection('trips').doc(_currentTripId)
+    .collection('packing').doc(_myFamilyName || uid);
+
+  const packSnap = await _currentTripPackingRef.get();
+  packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
 
   showScreen('app');
   renderDays(); renderPack(); renderSpots();
+  // 家庭名をパネルに表示
+  const famLabel = document.getElementById('family-label');
+  if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
 }
 
-// Firestoreへの保存
+// Firestoreへの保存（旅行本体）
 async function saveTrip() {
   if (!_currentTripId || !_currentGroupId) return;
   try {
@@ -1582,13 +1618,26 @@ async function saveTrip() {
       hotel:        document.getElementById('hotel').value,
       tripMemo:     document.getElementById('trip-memo').value,
       scheduleData: schedData,
-      packItems:    packItems,
       spots:        spots,
       createdBy:    window._currentUser?.uid || '',
       updatedAt:    firebase.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
   } catch(e) {
     console.error('saveTrip error:', e);
+  }
+}
+
+// 持ち物をサブコレクションに保存
+async function savePacking() {
+  if (!_currentTripPackingRef) return;
+  try {
+    await _currentTripPackingRef.set({
+      items: packItems,
+      familyName: _myFamilyName,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {
+    console.error('savePacking error:', e);
   }
 }
 
@@ -1599,10 +1648,10 @@ function backToTrips() {
 }
 
 // === INIT ===
-// 初期表示はlogin（Firebase認証監視で自動切替）
-// windowに公開してmoduleスクリプトから呼べるようにする
+// 初期表示はlogin
 window.showScreen('login');
-// DEF_PACKSをここで定義しておく（openTripから参照）
+// Firebase初期化（SDKロード確認後に実行）
+initFirebase();
 // ⑥ DOM描画後にヘッダー高さを計測してpadding調整
 requestAnimationFrame(adjustScrollPadding);
 </script>
