@@ -5,42 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>旅のてびき</title>
+<title>TRAVEL Planning</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
 :root {
-  --sky1:   #d4f1fb;
-  --sky2:   #9eddf5;
+  --sky1:   #c8edfa;
+  --sky2:   #8ed8f5;
   --sea1:   #5bbfe0;
   --sea2:   #2ea3cc;
   --deep:   #1a7aa8;
-  --sand:   #f7edd8;
   --white:  #ffffff;
   --glass:  rgba(255,255,255,0.38);
-  --glass2: rgba(255,255,255,0.22);
   --glassborder: rgba(255,255,255,0.65);
   --shadow: 0 6px 28px rgba(30,120,170,0.18);
   --text:   #1a4a60;
   --textsub:#4a8aaa;
   --r: 20px;
-  --hdr-h: 116px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { height: 100%; }
+/* ① 背景が切れないよう html/body 両方に固定背景 */
+html {
+  min-height: 100%;
+  background: linear-gradient(170deg,
+    var(--sky1) 0%, var(--sky2) 28%,
+    var(--sea1) 60%, var(--sea2) 82%,
+    var(--deep) 100%);
+  background-attachment: fixed;
+}
 body {
   font-family: 'Noto Sans JP', sans-serif;
   min-height: 100dvh;
-  background: linear-gradient(170deg,
-    var(--sky1) 0%,
-    var(--sky2) 28%,
-    var(--sea1) 60%,
-    var(--sea2) 82%,
-    var(--deep) 100%);
-  background-attachment: fixed;
+  background: transparent; /* htmlの背景を透過して見せる */
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -51,115 +50,152 @@ body {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 100;
-  padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.52);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255,255,255,0.7);
   box-shadow: 0 2px 20px rgba(30,120,170,0.1);
+  /* safe-area をpadding-topで吸収 */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* ② タイトル行 */
 .hdr-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px 8px;
+  padding: 8px 14px 0;
+  gap: 8px;
 }
 
+/* ① タイトル変更・小さめ */
 .logo {
   font-family: 'Nunito', sans-serif;
-  font-size: 1.45rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--deep);
-  letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
-.logo-wave { color: var(--sea1); }
+.logo em {
+  font-style: italic;
+  color: var(--sea1);
+  font-size: 0.9em;
+  letter-spacing: 0.04em;
+}
 
-.trip-pill {
-  background: var(--glass);
-  border: 1.5px solid var(--glassborder);
-  border-radius: 50px;
-  padding: 6px 14px;
-  display: flex;
+/* ② 概要バー（タイトル直下） */
+.overview-bar {
+  margin: 6px 14px 0;
+  background: rgba(255,255,255,0.45);
+  border: 1.5px solid rgba(255,255,255,0.78);
+  border-radius: 14px;
+  padding: 8px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   cursor: pointer;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
-  max-width: 200px;
 }
-.trip-pill:active { background: rgba(255,255,255,0.55); }
-.trip-dest-txt {
+.overview-bar:active { background: rgba(255,255,255,0.62); }
+
+.ov-left { min-width: 0; }
+.ov-dest {
   font-family: 'Nunito', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.9rem;
+  font-weight: 800;
   color: var(--deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.trip-date-txt {
+.ov-dates {
+  font-size: 0.68rem;
+  color: var(--textsub);
+  margin-top: 1px;
+}
+.ov-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.ov-members, .ov-hotel {
   font-size: 0.68rem;
   color: var(--textsub);
   white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-edit {
+  font-size: 0.65rem;
+  color: var(--sea1);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
 }
 
 .btn-pdf {
   background: linear-gradient(135deg, var(--sea1), var(--sea2));
   border: none;
   border-radius: 50px;
-  padding: 7px 14px;
+  padding: 7px 13px;
   color: white;
   font-family: 'Nunito', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 3px 12px rgba(46,163,204,0.35);
-  transition: box-shadow 0.15s, transform 0.1s;
+  transition: transform 0.1s;
   -webkit-tap-highlight-color: transparent;
-  display: flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.btn-pdf:active { transform: scale(0.96); }
+.btn-pdf:active { transform: scale(0.95); }
 
-/* ===== TABバー（ヘッダー下部固定）===== */
+/* ⑤ タブ：ガラス調 */
 .tab-bar {
   display: flex;
-  padding: 6px 14px 10px;
+  padding: 8px 14px 10px;
   gap: 7px;
+  background: transparent;
 }
-
 .tab-btn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 8px 6px;
-  border: none;
+  padding: 8px 4px;
+  border: 1.5px solid rgba(255,255,255,0.45);
   border-radius: 50px;
   font-family: 'Nunito', sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.18s;
   -webkit-tap-highlight-color: transparent;
-  background: transparent;
-  color: var(--textsub);
+  background: rgba(255,255,255,0.2);
+  color: var(--text);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   white-space: nowrap;
 }
 .tab-btn.active {
-  background: var(--white);
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(255,255,255,0.9);
   color: var(--deep);
   box-shadow: 0 3px 14px rgba(30,120,170,0.18);
 }
-.tab-btn .t-ico { font-size: 1rem; }
+.tab-btn .t-ico { font-size: 0.95rem; }
 
-/* ===== SCROLL AREA ===== */
+/* ===== ヘッダー高さ計算用変数 ===== */
+/* JS で動的に設定するが CSS fallback */
 .scroll-area {
-  padding-top: calc(var(--hdr-h) + env(safe-area-inset-top, 0px));
+  padding-top: 148px; /* fallback: JS で上書き */
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
   min-height: 100dvh;
   padding-left: 14px;
@@ -167,7 +203,7 @@ body {
 }
 
 /* ===== PANELS ===== */
-.panel { display: none; padding-top: 16px; }
+.panel { display: none; padding-top: 12px; }
 .panel.active { display: block; }
 
 /* ===== GLASS CARD ===== */
@@ -180,17 +216,6 @@ body {
   padding: 16px;
   box-shadow: var(--shadow);
   margin-bottom: 12px;
-}
-
-.card-head {
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--deep);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 /* ===== INPUTS ===== */
@@ -221,6 +246,8 @@ body {
   padding: 4px 2px;
   width: 100%;
   transition: border-color 0.18s;
+  /* ③ 高さ揃えのため line-height 統一 */
+  line-height: 1.5;
 }
 .l-inp::placeholder { color: rgba(30,100,140,0.32); }
 .l-inp:focus { border-color: var(--sea1); }
@@ -242,7 +269,7 @@ body {
   min-height: 44px;
   box-shadow: 0 2px 10px rgba(30,120,170,0.1);
 }
-.btn-add:active { background: rgba(255,255,255,0.8); }
+.btn-add:active { background: rgba(255,255,255,0.85); }
 
 .btn-del {
   background: rgba(255,255,255,0.45);
@@ -258,7 +285,7 @@ body {
 }
 .btn-del:active { background: rgba(255,100,100,0.15); color: #cc4444; }
 
-/* ===== MODAL（概要シート）===== */
+/* ===== MODAL ===== */
 .modal-ov {
   display: none;
   position: fixed; inset: 0; z-index: 200;
@@ -276,6 +303,8 @@ body {
   padding: 18px 18px calc(32px + env(safe-area-inset-bottom,0px));
   width: 100%; max-width: 480px;
   animation: su .28s cubic-bezier(.34,1.3,.64,1);
+  max-height: 90dvh;
+  overflow-y: auto;
 }
 @keyframes su { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 .modal-handle { width:40px;height:4px;background:rgba(30,120,170,0.2);border-radius:2px;margin:0 auto 16px; }
@@ -286,8 +315,7 @@ body {
 .btn-done {
   background: linear-gradient(135deg, var(--sea1), var(--sea2));
   border: none; border-radius: 50px;
-  padding: 12px 30px;
-  color: white;
+  padding: 12px 30px; color: white;
   font-family: 'Nunito', sans-serif;
   font-size: 0.92rem; font-weight: 700;
   cursor: pointer;
@@ -298,9 +326,11 @@ body {
 .btn-done:active { opacity: 0.85; }
 
 /* ===== 日程表 ===== */
+/* ④ Day チップ：カード内に収めてヘッダー被りを回避 */
 .day-scroll {
   display: flex; gap: 7px;
-  overflow-x: auto; padding-bottom: 12px; margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 12px; margin-bottom: 14px;
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .day-scroll::-webkit-scrollbar { display: none; }
@@ -326,19 +356,39 @@ body {
   box-shadow: 0 3px 12px rgba(26,122,168,0.35);
 }
 
+/* ③ スケジュール行：時刻・テキストの高さ揃え */
 .sched-list { display: flex; flex-direction: column; gap: 9px; }
 .sched-item {
   background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.75);
   border-left: 3px solid var(--sea1);
   border-radius: 0 14px 14px 0;
-  padding: 12px 12px 12px 14px;
+  padding: 10px 10px 10px 12px;
   display: grid;
-  grid-template-columns: 76px 1fr 32px;
-  gap: 10px; align-items: start;
+  grid-template-columns: 80px 1fr 32px;
+  gap: 8px;
+  align-items: center; /* ← start→center に変更 */
 }
-.sched-time { color: var(--sea2) !important; font-weight: 600; font-size: 0.82rem !important; }
-.sched-ta { resize: none; height: 44px; line-height: 1.5; }
+.sched-time {
+  color: var(--sea2) !important;
+  font-weight: 600;
+  font-size: 0.82rem !important;
+  height: 36px; /* ③ テキストエリアと高さ統一 */
+  display: flex;
+  align-items: center;
+}
+/* ③ time input 自体の高さ調整 */
+input[type="time"].sched-time {
+  height: 36px;
+  padding: 0 2px;
+  border-bottom: 1.5px solid rgba(30,120,170,0.2);
+}
+.sched-ta {
+  resize: none;
+  height: 36px; /* ③ time と同じ高さ */
+  line-height: 1.5;
+  padding: 6px 2px;
+}
 .add-center { display: flex; justify-content: center; margin-top: 14px; }
 
 /* ===== 持ち物 ===== */
@@ -348,7 +398,6 @@ body {
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .cat-scroll::-webkit-scrollbar { display: none; }
-
 .cat-chip {
   flex-shrink: 0;
   background: rgba(255,255,255,0.42);
@@ -358,27 +407,19 @@ body {
   color: var(--textsub);
   font-family: 'Nunito', sans-serif;
   font-size: 0.78rem; font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
+  cursor: pointer; transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
   min-height: 36px; display: flex; align-items: center;
 }
-.cat-chip.active {
-  background: var(--deep);
-  border-color: var(--deep);
-  color: white;
-}
-
+.cat-chip.active { background: var(--deep); border-color: var(--deep); color: white; }
 .pack-badge {
   font-family: 'Nunito', sans-serif;
   font-size: 0.72rem; font-weight: 700;
   color: var(--textsub);
   background: rgba(255,255,255,0.45);
   border: 1px solid rgba(255,255,255,0.7);
-  border-radius: 50px;
-  padding: 3px 11px;
+  border-radius: 50px; padding: 3px 11px;
 }
-
 .pack-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
 .pack-item {
   background: rgba(255,255,255,0.48);
@@ -386,110 +427,88 @@ body {
   border-radius: 14px;
   padding: 12px 14px;
   display: flex; align-items: center; gap: 12px;
-  min-height: 48px;
-  transition: background 0.15s;
+  min-height: 48px; transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.pack-item.checked {
-  background: rgba(91,191,224,0.18);
-  border-color: rgba(91,191,224,0.4);
-}
-.pack-cb {
-  width: 20px; height: 20px; min-width: 20px;
-  accent-color: var(--sea2); cursor: pointer;
-}
-.pack-label { flex: 1; font-size: 0.88rem; color: var(--text); cursor: pointer; }
-.pack-item.checked .pack-label { text-decoration: line-through; color: var(--textsub); }
-
-.add-pack-row { display: flex; gap: 8px; }
+.pack-item.checked { background: rgba(91,191,224,0.18); border-color: rgba(91,191,224,0.4); }
+.pack-cb { width:20px;height:20px;min-width:20px;accent-color:var(--sea2);cursor:pointer; }
+.pack-label { flex:1;font-size:0.88rem;color:var(--text);cursor:pointer; }
+.pack-item.checked .pack-label { text-decoration:line-through;color:var(--textsub); }
+.add-pack-row { display:flex;gap:8px; }
 .add-pack-sel {
   background: rgba(255,255,255,0.55);
   border: 1.5px solid rgba(255,255,255,0.8);
   border-radius: 12px;
-  padding: 0 10px;
-  color: var(--text);
-  font-family: 'Noto Sans JP', sans-serif;
+  padding: 0 10px; color: var(--text);
+  font-family: 'Noto Sans JP',sans-serif;
   font-size: 0.8rem; outline: none;
-  -webkit-appearance: none;
-  min-height: 44px;
+  -webkit-appearance: none; min-height: 44px;
 }
-.add-pack-sel option { background: #e8f8fd; color: var(--text); }
+.add-pack-sel option { background:#e8f8fd;color:var(--text); }
 
 /* ===== 行き先メモ ===== */
-.spots-list { display: flex; flex-direction: column; gap: 12px; }
+.spots-list { display:flex;flex-direction:column;gap:12px; }
 .spot-card {
   background: rgba(255,255,255,0.48);
   border: 1.5px solid rgba(255,255,255,0.78);
-  border-radius: var(--r);
-  padding: 14px;
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--r); padding:14px;
+  position:relative;overflow:hidden;
   box-shadow: 0 4px 18px rgba(30,120,170,0.1);
 }
-.spot-accent {
-  position: absolute; top: 0; left: 0; right: 0; height: 4px;
-  border-radius: var(--r) var(--r) 0 0;
-}
-.spot-name-inp { font-size: 0.96rem; font-weight: 600; margin-bottom: 8px; margin-top: 8px; }
-.spot-addr-inp { font-size: 0.8rem; margin-bottom: 8px; color: var(--textsub) !important; }
-.spot-addr-inp::placeholder { color: rgba(74,138,170,0.38) !important; }
-.spot-types { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.spot-accent { position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--r) var(--r) 0 0; }
+.spot-name-inp { font-size:0.96rem;font-weight:600;margin-bottom:8px;margin-top:8px; }
+.spot-addr-inp { font-size:0.8rem;margin-bottom:8px;color:var(--textsub)!important; }
+.spot-addr-inp::placeholder { color:rgba(74,138,170,0.38)!important; }
+.spot-types { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px; }
 .spot-type-tag {
-  background: rgba(255,255,255,0.55);
-  border: 1.5px solid rgba(30,120,170,0.18);
-  border-radius: 50px;
-  padding: 4px 12px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.73rem; font-weight: 700;
-  color: var(--textsub); cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
+  background:rgba(255,255,255,0.55);
+  border:1.5px solid rgba(30,120,170,0.18);
+  border-radius:50px;padding:4px 12px;
+  font-family:'Nunito',sans-serif;font-size:0.73rem;font-weight:700;
+  color:var(--textsub);cursor:pointer;transition:all 0.15s;
+  -webkit-tap-highlight-color:transparent;
 }
-.spot-type-tag.active {
-  background: var(--deep);
-  border-color: var(--deep);
-  color: white;
-}
-.spot-memo-inp { font-size: 0.82rem; resize: none; height: 52px; margin-bottom: 8px; }
-.spot-foot { display: flex; justify-content: flex-end; }
+.spot-type-tag.active { background:var(--deep);border-color:var(--deep);color:white; }
+.spot-memo-inp { font-size:0.82rem;resize:none;height:52px;margin-bottom:8px; }
+.spot-foot { display:flex;justify-content:flex-end; }
 .btn-del-text {
-  background: none;
-  border: 1px solid rgba(30,120,170,0.2);
-  border-radius: 50px;
-  padding: 5px 14px;
-  color: var(--textsub);
-  font-family: 'Nunito', sans-serif;
-  font-size: 0.75rem; font-weight: 600;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  background:none;border:1px solid rgba(30,120,170,0.2);
+  border-radius:50px;padding:5px 14px;
+  color:var(--textsub);font-family:'Nunito',sans-serif;
+  font-size:0.75rem;font-weight:600;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-.btn-del-text:active { color: #cc4444; border-color: rgba(200,60,60,0.3); }
+.btn-del-text:active { color:#cc4444;border-color:rgba(200,60,60,0.3); }
 
 /* ===== EMPTY ===== */
-.empty {
-  text-align: center;
-  padding: 36px 20px;
-  color: var(--textsub);
-  font-size: 0.85rem;
-  opacity: 0.7;
-}
-.empty .ico { font-size: 2.4rem; margin-bottom: 8px; }
+.empty { text-align:center;padding:36px 20px;color:var(--textsub);font-size:0.85rem;opacity:0.7; }
+.empty .ico { font-size:2.4rem;margin-bottom:8px; }
 </style>
 </head>
 <body>
 
-<!-- ===== FIXED HEADER ===== -->
-<header class="hdr">
+<!-- HEADER -->
+<header class="hdr" id="hdr">
   <div class="hdr-top">
-    <div class="logo">🌊 <span>旅のてびき</span></div>
-    <div class="trip-pill" onclick="openModal()">
-      <div>
-        <div class="trip-dest-txt" id="hdr-dest">目的地を設定 ✏️</div>
-        <div class="trip-date-txt" id="hdr-dates"></div>
-      </div>
-    </div>
+    <!-- ① タイトル変更 -->
+    <div class="logo">🌊 TRAVEL <em>Planning</em></div>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
+
+  <!-- ② 概要バー（タイトル直下） -->
+  <div class="overview-bar" onclick="openModal()">
+    <div class="ov-left">
+      <div class="ov-dest" id="ov-dest">目的地を設定する ✏️</div>
+      <div class="ov-dates" id="ov-dates"></div>
+    </div>
+    <div class="ov-right">
+      <div class="ov-members" id="ov-members"></div>
+      <div class="ov-hotel" id="ov-hotel"></div>
+      <div class="ov-edit">タップして編集</div>
+    </div>
+  </div>
+
+  <!-- ⑤ タブ：ガラス調 -->
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
       <span class="t-ico">📅</span> 日程表
@@ -503,15 +522,20 @@ body {
   </div>
 </header>
 
-<!-- ===== SCROLL AREA ===== -->
-<div class="scroll-area">
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scroll-area">
 
   <!-- 日程表 -->
   <div class="panel active" id="panel-schedule">
-    <div class="day-scroll" id="day-selector"></div>
+    <!-- ④ day-scroll を g-card の外に置いてスクロールエリア内に収める -->
+    <div class="g-card" style="padding-bottom:4px;">
+      <div class="day-scroll" id="day-selector">
+        <div class="empty" style="padding:8px 0;opacity:0.6;font-size:0.8rem;">出発日・帰着日を設定するとDayタブが表示されます</div>
+      </div>
+    </div>
     <div class="g-card">
       <div class="sched-list" id="sched-list">
-        <div class="empty"><div class="ico">🌅</div>出発日・帰着日を設定すると<br>Dayタブが表示されます</div>
+        <div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>
       </div>
       <div class="add-center" style="margin-top:14px;">
         <button class="btn-add" onclick="addSched()">＋ 予定を追加</button>
@@ -558,7 +582,7 @@ body {
 
 </div>
 
-<!-- ===== MODAL ===== -->
+<!-- MODAL -->
 <div class="modal-ov" id="modal" onclick="closeOut(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -569,8 +593,8 @@ body {
         <div class="modal-field"><label>出発日</label><input class="f-inp" type="date" id="start-date" oninput="updateHdr();syncDays()"></div>
         <div class="modal-field"><label>帰着日</label><input class="f-inp" type="date" id="end-date" oninput="updateHdr();syncDays()"></div>
       </div>
-      <div class="modal-field"><label>メンバー</label><input class="f-inp" type="text" id="members" placeholder="例: 大人2名 子1名"></div>
-      <div class="modal-field"><label>宿泊先</label><input class="f-inp" type="text" id="hotel" placeholder="例: ○○ホテル"></div>
+      <div class="modal-field"><label>メンバー</label><input class="f-inp" type="text" id="members" placeholder="例: 大人2名 子1名" oninput="updateHdr()"></div>
+      <div class="modal-field"><label>宿泊先</label><input class="f-inp" type="text" id="hotel" placeholder="例: ○○ホテル" oninput="updateHdr()"></div>
       <div class="modal-field"><label>メモ</label><input class="f-inp" type="text" id="trip-memo" placeholder="例: 夏休み旅行"></div>
     </div>
     <div class="modal-btm"><button class="btn-done" onclick="closeModal()">完了 ✓</button></div>
@@ -591,25 +615,51 @@ const SPOT_ACCENTS=[
 ];
 const SPOT_TYPES=['観光','グルメ','ショッピング','宿泊','その他'];
 
+// ⑥ ヘッダー高さを動的に取得してscroll-areaのpadding-topを調整
+function adjustScrollPadding() {
+  const hdr = document.getElementById('hdr');
+  const sa = document.getElementById('scroll-area');
+  if (hdr && sa) {
+    sa.style.paddingTop = (hdr.offsetHeight + 8) + 'px';
+  }
+}
+// 初期化時・リサイズ時に調整
+window.addEventListener('resize', adjustScrollPadding);
+// フォント読み込み後に再調整
+document.fonts.ready.then(adjustScrollPadding);
+
 // === MODAL ===
 function openModal(){ document.getElementById('modal').classList.add('open'); }
-function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); adjustScrollPadding(); }
 function closeOut(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
-// === HEADER ===
+// === HEADER / OVERVIEW BAR ===
 function updateHdr(){
-  const dest=document.getElementById('dest').value;
-  const s=document.getElementById('start-date').value, e=document.getElementById('end-date').value;
-  document.getElementById('hdr-dest').textContent=(dest||'目的地を設定')+' ✏️';
-  if(s&&e){
-    const sd=new Date(s),ed=new Date(e),d=Math.ceil((ed-sd)/86400000)+1;
-    document.getElementById('hdr-dates').textContent=`${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
-  } else document.getElementById('hdr-dates').textContent='';
+  const dest  = document.getElementById('dest').value;
+  const s     = document.getElementById('start-date').value;
+  const e     = document.getElementById('end-date').value;
+  const mem   = document.getElementById('members').value;
+  const hotel = document.getElementById('hotel').value;
+
+  document.getElementById('ov-dest').textContent = (dest || '目的地を設定する') + ' ✏️';
+
+  if(s && e){
+    const sd=new Date(s), ed=new Date(e), d=Math.ceil((ed-sd)/86400000)+1;
+    document.getElementById('ov-dates').textContent =
+      `${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
+  } else {
+    document.getElementById('ov-dates').textContent = '';
+  }
+  document.getElementById('ov-members').textContent = mem  ? `👤 ${mem}`   : '';
+  document.getElementById('ov-hotel').textContent   = hotel ? `🏨 ${hotel}` : '';
+
+  // 概要が増えたぶんヘッダー高が変わるので再調整
+  adjustScrollPadding();
 }
 
 function syncDays(){
   const s=document.getElementById('start-date').value, e=document.getElementById('end-date').value;
-  if(!s||!e)return;
+  if(!s||!e) return;
   totalDays=Math.max(1,Math.ceil((new Date(e)-new Date(s))/86400000)+1);
   renderDays();
 }
@@ -629,11 +679,10 @@ function renderDays(){
 }
 
 function addSched(){
-  if(!schedData[curDay])schedData[curDay]=[];
+  if(!schedData[curDay]) schedData[curDay]=[];
   schedData[curDay].push({time:'',content:''});
   renderSched();
 }
-
 function renderSched(){
   const list=document.getElementById('sched-list'), items=schedData[curDay]||[];
   if(!items.length){ list.innerHTML='<div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>'; return; }
@@ -641,7 +690,7 @@ function renderSched(){
   items.forEach((item,idx)=>{
     const d=document.createElement('div'); d.className='sched-item';
     d.innerHTML=`<input class="l-inp sched-time" type="time" value="${item.time}" oninput="schedData[${curDay}][${idx}].time=this.value">
-<textarea class="l-inp sched-ta" placeholder="予定・メモ" oninput="schedData[${curDay}][${idx}].content=this.value">${item.content}</textarea>
+<textarea class="l-inp sched-ta" placeholder="予定・メモを入力" oninput="schedData[${curDay}][${idx}].content=this.value">${item.content}</textarea>
 <button class="btn-del" onclick="delSched(${idx})">×</button>`;
     list.appendChild(d);
   });
@@ -684,7 +733,7 @@ function filterCat(cat,el){
 }
 function addPack(){
   const inp=document.getElementById('new-pack'), cat=document.getElementById('new-pack-cat').value;
-  if(!inp.value.trim())return;
+  if(!inp.value.trim()) return;
   packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack();
 }
 
@@ -728,17 +777,15 @@ async function exportPDF(){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
   const dest=document.getElementById('dest').value||'旅行';
-  const s=document.getElementById('start-date').value,e=document.getElementById('end-date').value;
-  const members=document.getElementById('members').value,hotel=document.getElementById('hotel').value,memo=document.getElementById('trip-memo').value;
-  const W=210,H=297,M=14;let y=M;
-  // ヘッダー
+  const s=document.getElementById('start-date').value, e=document.getElementById('end-date').value;
+  const members=document.getElementById('members').value, hotel=document.getElementById('hotel').value, memo=document.getElementById('trip-memo').value;
+  const W=210,H=297,M=14; let y=M;
   doc.setFillColor(30,120,168);doc.rect(0,0,W,22,'F');
   doc.setFillColor(91,191,224);doc.rect(0,19,W,3,'F');
   doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(16);
   doc.text('Travel Plan',M,13);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(dest,W-M,13,{align:'right'});
   y=30;
-  // 概要
   doc.setFillColor(232,248,253);doc.roundedRect(M,y,W-M*2,30,3,3,'F');
   doc.setTextColor(26,74,96);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('OVERVIEW',M+4,y+7);
   doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,80,110);
@@ -760,14 +807,16 @@ async function exportPDF(){
   hr();
   sec('Spots');
   if(!spots.length){bln('No spots registered.');}
-  else{spots.forEach(sp=>{chk(16);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(26,74,96);doc.text(sp.name||'(Unnamed)',M+4,y);if(sp.type){doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(91,191,224);doc.text(sp.type,W-M-2,y,{align:'right'});}y+=5.5;if(sp.address){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60,120,150);doc.text(sp.address,M+6,y);y+=5;}if(sp.memo){bln(sp.memo,4);}y+=2;});}
+  else{spots.forEach(sp=>{chk(16);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(26,74,96);doc.text(sp.name||'(Unnamed)',M+4,y);if(sp.type){doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(91,191,224);doc.text(sp.type,W-M-2,y,{align:'right'});}y+=5.5;if(sp.address){doc.setFont('helvetito','normal');doc.setFontSize(8);doc.setTextColor(60,120,150);doc.text(sp.address,M+6,y);y+=5;}if(sp.memo){bln(sp.memo,4);}y+=2;});}
   const pc=doc.internal.getNumberOfPages();
-  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setDrawColor(91,191,224);doc.setLineWidth(0.5);doc.line(M,H-12,W-M,H-12);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(26,74,96);doc.text('旅のてびき',M,H-7);doc.text(`${i} / ${pc}`,W-M,H-7,{align:'right'});}
+  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setDrawColor(91,191,224);doc.setLineWidth(0.5);doc.line(M,H-12,W-M,H-12);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(26,74,96);doc.text('TRAVEL Planning',M,H-7);doc.text(`${i} / ${pc}`,W-M,H-7,{align:'right'});}
   doc.save(`travel_${dest||'plan'}.pdf`);
 }
 
 // === INIT ===
 renderDays(); renderPack(); renderSpots();
+// ⑥ DOM描画後にヘッダー高さを計測してpadding調整
+requestAnimationFrame(adjustScrollPadding);
 </script>
 </body>
 </html>
