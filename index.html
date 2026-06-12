@@ -810,12 +810,20 @@ input[type="time"].sched-time {
 }
 .trip-item-date { font-size: 0.72rem; color: var(--textsub); margin-top: 2px; }
 .trip-item-arrow { color: var(--sea1); font-size: 1.1rem; }
-.trip-item-edit {
-  font-size: 0.68rem;
+.btn-trip-edit {
+  background: rgba(30,120,170,0.1);
+  border: 1px solid rgba(30,120,170,0.2);
+  border-radius: 50%;
+  width: 32px; height: 32px; min-width: 32px;
   color: var(--textsub);
-  margin-top: 3px;
-  opacity: 0.6;
+  font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
+.btn-trip-edit:active { background: rgba(30,120,170,0.22); color: var(--deep); }
 /* 名前変更モーダル */
 .rename-overlay {
   display: none;
@@ -1635,36 +1643,16 @@ async function loadTrips() {
       const date = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('ja-JP') : '';
       const dest = d.dest ? ` · ${d.dest}` : '';
       div.innerHTML = `
-        <div>
+        <div style="flex:1;min-width:0;">
           <div class="trip-item-name">${d.name}</div>
           <div class="trip-item-date">${date}${dest}</div>
-          <div class="trip-item-edit">長押しで名前変更</div>
         </div>
-        <div class="trip-item-arrow">›</div>`;
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn-trip-edit" onclick="event.stopPropagation();openRenameModal('${d.id}','${d.name.replace(/'/g,"\'")}')">✏️</button>
+          <div class="trip-item-arrow">›</div>
+        </div>`;
 
-      // タップ → 旅行を開く
       div.onclick = () => openTrip(d.id, d);
-
-      // 長押し → 名前変更モーダル
-      let pressTimer = null;
-      div.addEventListener('touchstart', () => {
-        pressTimer = setTimeout(() => {
-          pressTimer = null;
-          openRenameModal(d.id, d.name);
-        }, 600);
-      }, { passive: true });
-      div.addEventListener('touchend', () => {
-        if (pressTimer) clearTimeout(pressTimer);
-      });
-      div.addEventListener('touchmove', () => {
-        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-      });
-      // PCでは右クリックで名前変更
-      div.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        openRenameModal(d.id, d.name);
-      });
-
       list.appendChild(div);
     });
   } catch(e) {
