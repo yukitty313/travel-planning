@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>TRAVEL Planning</title>
@@ -533,10 +533,10 @@ input[type="time"].sched-time {
 .pack-item {
   background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.72);
-  border-radius: 14px;
-  padding: 12px 14px;
-  display: flex; align-items: center; gap: 12px;
-  min-height: 48px; transition: background 0.15s;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 38px; transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 .pack-item.checked { background: rgba(91,191,224,0.18); border-color: rgba(91,191,224,0.4); }
@@ -1026,11 +1026,11 @@ input[type="time"].sched-time {
       <div class="add-pack-row">
         <input class="f-inp" style="flex:1" type="text" id="new-pack" placeholder="持ち物を追加" onkeydown="if(event.key==='Enter')addPack()">
         <select class="add-pack-sel" id="new-pack-cat">
-          <option value="衣類">👕</option>
-          <option value="洗面">🧴</option>
-          <option value="書類">📄</option>
-          <option value="電子機器">🔌</option>
-          <option value="その他">📦</option>
+          <option value="衣類">衣類</option>
+          <option value="洗面">洗面</option>
+          <option value="書類">書類</option>
+          <option value="電子機器">電子機器</option>
+          <option value="その他">その他</option>
         </select>
         <button class="btn-add" onclick="addPack()" style="padding:0 16px;min-width:52px;">＋</button>
       </div>
