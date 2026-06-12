@@ -44,16 +44,21 @@ getRedirectResult(auth).catch(() => {});
 onAuthStateChanged(auth, async user => {
   if (user) {
     window._currentUser = user;
-    // users コレクションに初回登録（既存なら何もしない）
+    // users コレクションに登録・更新
     const userRef = doc(db, 'users', user.uid);
     const userSnap = await getDoc(userRef);
+    const displayName = user.displayName || user.email;
     if (!userSnap.exists()) {
+      // 初回登録
       await setDoc(userRef, {
-        displayName: user.displayName || user.email,
+        displayName,
         email: user.email,
-        isAdmin: false,   // デフォルトは非管理者
+        isAdmin: false,
         createdAt: serverTimestamp()
       });
+    } else if (user.displayName && userSnap.data().displayName !== user.displayName) {
+      // displayName が更新されていれば同期
+      await setDoc(userRef, { displayName: user.displayName }, { merge: true });
     }
     showScreen('group');
     loadGroups();
@@ -1409,7 +1414,11 @@ async function registerEmail() {
   try {
     const { auth, createUserWithEmailAndPassword, updateProfile } = window._fb;
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // updateProfile を await してから currentUser を再取得
     await updateProfile(cred.user, { displayName: name });
+    // displayName が確実に反映されるよう currentUser を更新
+    await cred.user.reload();
+    window._currentUser = auth.currentUser;
   } catch(e) {
     if (e.code === 'auth/email-already-in-use') showAuthError('このメールアドレスは既に使われています');
     else showAuthError('登録に失敗しました: ' + e.message);
@@ -1431,12 +1440,15 @@ async function loadGroups() {
   if (!window._currentUser) return;
   const { db, collection, query, where, getDocs, doc, getDoc } = window._fb;
   const uid = window._currentUser.uid;
-  const name = window._currentUser.displayName || window._currentUser.email;
-  document.getElementById('user-hello').textContent = `こんにちは、${name} さん 👋`;
 
-  // 管理者チェック
+  // usersコレクションから最新の表示名・管理者フラグを取得
   const userSnap = await getDoc(doc(db, 'users', uid));
-  const isAdmin = userSnap.exists() && userSnap.data().isAdmin === true;
+  const userData = userSnap.exists() ? userSnap.data() : {};
+  const isAdmin = userData.isAdmin === true;
+  // Firestoreの値を優先、なければAuthの値、最後はメール
+  const displayName = userData.displayName || window._currentUser.displayName || window._currentUser.email;
+  document.getElementById('user-hello').textContent = `こんにちは、${displayName} さん 👋`;
+
   const createSection = document.getElementById('create-group-section');
   if (createSection) {
     createSection.style.display = isAdmin ? 'block' : 'none';
