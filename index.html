@@ -698,6 +698,23 @@ input[type="time"].sched-time {
   font-size: 1.2rem; font-weight: 800;
   color: white; letter-spacing: 0.05em;
 }
+.btn-reload {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+  width: 34px; height: 34px;
+  color: rgba(255,255,255,0.85);
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.3s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.btn-reload:active { background: rgba(255,255,255,0.35); }
+.btn-reload.spinning { animation: spin 0.6s linear; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 .btn-signout {
   background: rgba(255,255,255,0.2);
   border: 1px solid rgba(255,255,255,0.4);
@@ -834,7 +851,10 @@ input[type="time"].sched-time {
   <div class="group-wrap">
     <div class="group-header">
       <div class="group-title">✈ TRAVEL Planning</div>
-      <button class="btn-signout" onclick="doSignOut()">ログアウト</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn-reload" id="reload-group" onclick="reloadCurrentScreen()" title="更新">↻</button>
+        <button class="btn-signout" onclick="doSignOut()">ログアウト</button>
+      </div>
     </div>
     <div class="user-hello" id="user-hello"></div>
 
@@ -860,7 +880,7 @@ input[type="time"].sched-time {
   <div class="trips-header">
     <button class="btn-back" onclick="showScreen('group')">← グループ</button>
     <div class="trips-title" id="trips-group-name"></div>
-    <div style="width:60px"></div>
+    <button class="btn-reload" id="reload-trips" onclick="reloadCurrentScreen()" title="更新" style="background:rgba(255,255,255,0.3);border-color:rgba(30,120,170,0.3);color:var(--deep);">↻</button>
   </div>
   <div class="trips-wrap">
     <div class="g-card" style="margin-bottom:12px;">
@@ -881,7 +901,10 @@ input[type="time"].sched-time {
   <div class="hdr-top">
     <button class="btn-back" onclick="backToTrips()" style="font-size:0.75rem;padding:5px 12px;">← 旅行一覧</button>
     <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
-    <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="btn-reload" id="reload-app" onclick="reloadCurrentScreen()" title="更新" style="background:rgba(255,255,255,0.3);border-color:rgba(30,120,170,0.25);color:var(--deep);">↻</button>
+      <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
+    </div>
   </div>
   <div class="overview-bar" onclick="openModal()">
     <div class="ov-dest" id="ov-dest">目的地を設定する</div>
@@ -1638,6 +1661,52 @@ async function savePacking() {
     });
   } catch(e) {
     console.error('savePacking error:', e);
+  }
+}
+
+// ============================================================
+// 現在の画面をリロード（画面は変えずにデータだけ再取得）
+// ============================================================
+async function reloadCurrentScreen() {
+  // 押されたボタンをスピンさせる
+  const btns = document.querySelectorAll('.btn-reload');
+  btns.forEach(b => {
+    b.classList.add('spinning');
+    setTimeout(() => b.classList.remove('spinning'), 600);
+  });
+
+  // アクティブな画面を判定して対応する再取得関数を呼ぶ
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  const id = activeScreen.id;
+
+  if (id === 'screen-group') {
+    // グループ一覧を再取得
+    await loadGroups();
+
+  } else if (id === 'screen-trips') {
+    // 旅行一覧を再取得
+    await loadTrips();
+
+  } else if (id === 'screen-app') {
+    // 旅行詳細：スケジュール・スポット・持ち物を再取得
+    if (!_currentTripId) return;
+    const tripSnap = await _db.collection('trips').doc(_currentTripId).get();
+    if (!tripSnap.exists) return;
+    const data = tripSnap.data();
+    schedData = data.scheduleData || {};
+    spots     = data.spots        || [];
+
+    // 持ち物はサブコレクションから再取得
+    if (_currentTripPackingRef) {
+      const packSnap = await _currentTripPackingRef.get();
+      packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
+    }
+
+    // 表示を更新
+    renderDays();
+    renderPack();
+    renderSpots();
   }
 }
 
