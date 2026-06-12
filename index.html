@@ -1826,46 +1826,11 @@ async function submitRename() {
 // ============================================================
 // 現在の画面をリロード（画面は変えずにデータだけ再取得）
 // ============================================================
-async function reloadCurrentScreen() {
-  // 押されたボタンをスピンさせる
+function reloadCurrentScreen() {
+  // スピンアニメを少し見せてからリロード
   const btns = document.querySelectorAll('.btn-reload');
-  btns.forEach(b => {
-    b.classList.add('spinning');
-    setTimeout(() => b.classList.remove('spinning'), 600);
-  });
-
-  // アクティブな画面を判定して対応する再取得関数を呼ぶ
-  const activeScreen = document.querySelector('.screen.active');
-  if (!activeScreen) return;
-  const id = activeScreen.id;
-
-  if (id === 'screen-group') {
-    // グループ一覧を再取得
-    await loadGroups();
-
-  } else if (id === 'screen-trips') {
-    // 旅行一覧を再取得
-    await loadTrips();
-
-  } else if (id === 'screen-app') {
-    // 旅行詳細：キャッシュを無視してサーバーから強制取得
-    if (!_currentTripId) return;
-    const tripSnap = await _db.collection('trips').doc(_currentTripId).get({ source: 'server' });
-    if (!tripSnap.exists) return;
-    const data = tripSnap.data();
-    schedData = data.scheduleData || {};
-    spots     = data.spots        || [];
-
-    // 持ち物もサーバーから強制取得
-    if (_currentTripPackingRef) {
-      const packSnap = await _currentTripPackingRef.get({ source: 'server' });
-      packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
-    }
-
-    renderDays();
-    renderPack();
-    renderSpots();
-  }
+  btns.forEach(b => b.classList.add('spinning'));
+  setTimeout(() => location.reload(), 400);
 }
 
 // アプリ画面の「← グループ」ボタン用
