@@ -41,9 +41,20 @@ window._fb = { auth, db, googleProvider,
 getRedirectResult(auth).catch(() => {});
 
 // 認証状態の監視
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   if (user) {
     window._currentUser = user;
+    // users コレクションに初回登録（既存なら何もしない）
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        displayName: user.displayName || user.email,
+        email: user.email,
+        isAdmin: false,   // デフォルトは非管理者
+        createdAt: serverTimestamp()
+      });
+    }
     showScreen('group');
     loadGroups();
   } else {
@@ -878,7 +889,7 @@ input[type="time"].sched-time {
     </div>
     <div class="user-hello" id="user-hello"></div>
 
-    <div class="g-card" style="margin-bottom:12px;">
+    <div id="create-group-section" class="g-card" style="margin-bottom:12px;">
       <div class="card-head">グループを作成</div>
       <input class="f-inp" type="text" id="new-group-name" placeholder="グループ名（例：沖縄旅行メンバー）" style="margin-bottom:10px;">
       <div class="add-center"><button class="btn-add" onclick="createGroup()">＋ グループを作成</button></div>
@@ -1418,16 +1429,24 @@ let _currentGroupName = null;
 
 async function loadGroups() {
   if (!window._currentUser) return;
-  const { db, collection, query, where, getDocs } = window._fb;
+  const { db, collection, query, where, getDocs, doc, getDoc } = window._fb;
   const uid = window._currentUser.uid;
   const name = window._currentUser.displayName || window._currentUser.email;
   document.getElementById('user-hello').textContent = `こんにちは、${name} さん 👋`;
+
+  // 管理者チェック
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  const isAdmin = userSnap.exists() && userSnap.data().isAdmin === true;
+  const createSection = document.getElementById('create-group-section');
+  if (createSection) {
+    createSection.style.display = isAdmin ? 'block' : 'none';
+  }
 
   const q = query(collection(db, 'groups'), where('members', 'array-contains', uid));
   const snap = await getDocs(q);
   const list = document.getElementById('group-list');
   if (snap.empty) {
-    list.innerHTML = '<div class="empty"><div class="ico">👥</div>グループがありません<br>作成または参加してください</div>';
+    list.innerHTML = '<div class="empty"><div class="ico">👥</div>グループがありません<br>招待コードで参加してください</div>';
     return;
   }
   list.innerHTML = '';
@@ -1435,10 +1454,14 @@ async function loadGroups() {
     const d = docSnap.data();
     const div = document.createElement('div');
     div.className = 'group-item';
+    // 管理者のみ招待コードを表示
+    const codeRow = isAdmin
+      ? `<div class="group-item-code">招待コード: <b>${d.inviteCode}</b></div>`
+      : '';
     div.innerHTML = `
       <div>
         <div class="group-item-name">${d.name}</div>
-        <div class="group-item-code">招待コード: <b>${d.inviteCode}</b></div>
+        ${codeRow}
       </div>
       <div class="group-item-arrow">›</div>`;
     div.onclick = () => openGroup(docSnap.id, d.name);
