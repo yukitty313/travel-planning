@@ -107,7 +107,7 @@ body {
 
 /* ② 概要バー（タイトル直下） */
 .overview-bar {
-  margin: 5px 14px 0;
+  margin: 0;
   background: rgba(255,255,255,0.45);
   border: 1.5px solid rgba(255,255,255,0.78);
   border-radius: 14px;
@@ -966,14 +966,16 @@ input[type="time"].sched-time {
     <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
-  <div class="overview-bar" onclick="openModal()" style="padding-right:8px;">
-    <div class="ov-dest" id="ov-dest">目的地を設定する</div>
-    <div class="ov-divider" id="ov-divider" style="display:none"></div>
-    <div class="ov-dates" id="ov-dates" style="flex:1;"></div>
+  <div style="display:flex;align-items:center;gap:8px;padding:0 0 0 0;">
+    <div class="overview-bar" onclick="openModal()" style="flex:1;margin:0;">
+      <div class="ov-dest" id="ov-dest">目的地を設定する</div>
+      <div class="ov-divider" id="ov-divider" style="display:none"></div>
+      <div class="ov-dates" id="ov-dates"></div>
+    </div>
     <button class="btn-reload" id="reload-app"
-      onclick="event.stopPropagation();reloadCurrentScreen()"
+      onclick="reloadCurrentScreen()"
       title="更新"
-      style="background:rgba(255,255,255,0.35);border-color:rgba(30,120,170,0.2);color:var(--deep);width:30px;height:30px;font-size:0.9rem;flex-shrink:0;">↻</button>
+      style="background:rgba(255,255,255,0.35);border:1.5px solid rgba(255,255,255,0.6);color:var(--deep);width:36px;height:36px;font-size:1rem;flex-shrink:0;border-radius:50%;">↻</button>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
