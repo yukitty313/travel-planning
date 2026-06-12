@@ -345,9 +345,8 @@ body {
 .day-scroll {
   display: flex; gap: 7px;
   overflow-x: auto;
-  /* ③ カード外：左右パディングでスクロールエリアに合わせる */
-  padding: 10px 2px 10px;
-  margin-bottom: 8px;
+  padding: 2px 2px 8px;
+  margin-bottom: 6px;
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .day-scroll::-webkit-scrollbar { display: none; }
@@ -373,8 +372,10 @@ body {
   box-shadow: 0 3px 12px rgba(26,122,168,0.35);
 }
 
-/* ③ スケジュール行：時刻・テキストの高さ揃え */
+/* スケジュール行 */
 .sched-list { display: flex; flex-direction: column; gap: 9px; }
+
+/* 通常表示（閲覧モード）*/
 .sched-item {
   background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.75);
@@ -382,34 +383,122 @@ body {
   border-radius: 0 14px 14px 0;
   padding: 10px 10px 10px 12px;
   display: grid;
-  grid-template-columns: 80px 1fr 32px;
+  grid-template-columns: 80px 1fr auto;
   gap: 8px;
-  align-items: center; /* ← start→center に変更 */
+  align-items: start;
 }
-.sched-time {
-  color: var(--sea2) !important;
-  font-weight: 600;
-  font-size: 0.82rem !important;
-  height: 36px; /* ③ テキストエリアと高さ統一 */
-  display: flex;
-  align-items: center;
-}
-/* ③ time input 自体の高さ調整 */
+
+/* 時刻input */
 input[type="time"].sched-time {
+  color: var(--sea2);
+  font-weight: 600;
+  font-size: 0.82rem;
   height: 36px;
+  line-height: 36px;
   padding: 0 2px;
   border-bottom: 1.5px solid rgba(30,120,170,0.2);
+  background: transparent;
+  border-top: none; border-left: none; border-right: none;
+  outline: none;
+  width: 100%;
+  display: block;
 }
+/* 閲覧モード：時刻表示span */
+.sched-time-view {
+  color: var(--sea2);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  height: 36px;
+  line-height: 36px;
+  display: block;
+  white-space: nowrap;
+}
+
+/* 予定テキストエリア */
 .sched-ta {
   resize: none;
   height: 36px;
   min-height: 36px;
-  max-height: 300px;
+  max-height: 400px;
   line-height: 1.5;
   padding: 6px 2px;
   overflow-y: hidden;
+  display: block;
 }
-.add-center { display: flex; justify-content: center; margin-top: 14px; }
+/* 閲覧モード：予定表示div */
+.sched-content-view {
+  font-size: 0.86rem;
+  color: var(--text);
+  line-height: 1.55;
+  padding: 6px 2px;
+  min-height: 36px;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* メモ欄（📝ボタンで展開） */
+.sched-memo-wrap {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+.sched-memo-ta {
+  resize: none;
+  width: 100%;
+  min-height: 56px;
+  max-height: 300px;
+  overflow-y: hidden;
+  background: rgba(255,255,255,0.35);
+  border: 1px dashed rgba(30,120,170,0.3);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.5;
+  outline: none;
+}
+.sched-memo-ta::placeholder { color: rgba(30,100,140,0.35); }
+/* 閲覧モード：メモ表示 */
+.sched-memo-view {
+  background: rgba(255,255,255,0.28);
+  border: 1px dashed rgba(30,120,170,0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--textsub);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 右ボタン列 */
+.sched-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+}
+.btn-memo {
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(30,120,170,0.18);
+  border-radius: 50%;
+  width: 32px; height: 32px; min-width: 32px;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-memo:active { background: rgba(255,217,61,0.25); }
+
+.add-center { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+
+/* 編集モード中はカード全体に薄い枠 */
+.sched-edit-mode .sched-item {
+  background: rgba(255,255,255,0.62);
+  border-color: rgba(30,120,170,0.3);
+}
 
 /* ===== 持ち物 ===== */
 .cat-scroll {
@@ -555,7 +644,8 @@ input[type="time"].sched-time {
         <div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>
       </div>
       <div class="add-center" style="margin-top:14px;">
-        <button class="btn-add" onclick="addSched()">＋ 予定を追加</button>
+        <button class="btn-add" id="btn-add-sched" onclick="addSched()">＋ 予定を追加</button>
+        <button class="btn-add" id="btn-edit-sched" onclick="toggleEditMode()" style="background:rgba(46,163,204,0.18);border-color:rgba(46,163,204,0.45);color:var(--deep);">✏️ 編集</button>
       </div>
     </div>
   </div>
@@ -695,32 +785,112 @@ function renderDays(){
   renderSched();
 }
 
-function addSched(){
-  if(!schedData[curDay]) schedData[curDay]=[];
-  schedData[curDay].push({time:'',content:''});
+// 編集モード状態
+let schedEditMode = false;
+
+function toggleEditMode() {
+  schedEditMode = !schedEditMode;
+  const btn = document.getElementById('btn-edit-sched');
+  const addBtn = document.getElementById('btn-add-sched');
+  if (schedEditMode) {
+    btn.textContent = '✅ 完了';
+    btn.style.background = 'rgba(91,191,224,0.28)';
+    btn.style.borderColor = 'rgba(46,163,204,0.6)';
+    addBtn.style.display = 'flex';
+  } else {
+    btn.textContent = '✏️ 編集';
+    btn.style.background = 'rgba(46,163,204,0.18)';
+    btn.style.borderColor = 'rgba(46,163,204,0.45)';
+  }
   renderSched();
 }
-// ② textarea 自動拡張
+
+function addSched(){
+  if (!schedEditMode) return;
+  if(!schedData[curDay]) schedData[curDay]=[];
+  schedData[curDay].push({time:'',content:'',memo:'',memoOpen:false});
+  renderSched();
+  // 追加後、最後のitemsにフォーカス
+  setTimeout(()=>{
+    const tas = document.querySelectorAll('.sched-ta');
+    if(tas.length) tas[tas.length-1].focus();
+  }, 50);
+}
+
 function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = ta.scrollHeight + 'px';
 }
 
+function toggleMemo(day, idx) {
+  schedData[day][idx].memoOpen = !schedData[day][idx].memoOpen;
+  renderSched();
+  if (schedData[day][idx].memoOpen) {
+    setTimeout(()=>{
+      const memos = document.querySelectorAll('.sched-memo-ta');
+      if(memos.length) memos[memos.length-1].focus();
+    }, 50);
+  }
+}
+
 function renderSched(){
   const list=document.getElementById('sched-list'), items=schedData[curDay]||[];
-  if(!items.length){ list.innerHTML='<div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>'; return; }
+  // 編集ボタンの表示制御
+  const addBtn = document.getElementById('btn-add-sched');
+  if(addBtn) addBtn.style.display = schedEditMode ? 'flex' : 'none';
+
+  if(!items.length){
+    list.innerHTML='<div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>';
+    return;
+  }
+  list.className = 'sched-list' + (schedEditMode ? ' sched-edit-mode' : '');
   list.innerHTML='';
+
   items.forEach((item,idx)=>{
-    const d=document.createElement('div'); d.className='sched-item';
-    d.innerHTML=`<input class="l-inp sched-time" type="time" value="${item.time}" oninput="schedData[${curDay}][${idx}].time=this.value">
-<textarea class="l-inp sched-ta" placeholder="予定・メモを入力" oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this)">${item.content}</textarea>
-<button class="btn-del" onclick="delSched(${idx})">×</button>`;
+    const d = document.createElement('div');
+    d.className = 'sched-item';
+
+    if (schedEditMode) {
+      // ── 編集モード ──
+      d.innerHTML = `
+        <input class="l-inp sched-time" type="time" value="${item.time||''}"
+          oninput="schedData[${curDay}][${idx}].time=this.value">
+        <textarea class="l-inp sched-ta" placeholder="予定を入力"
+          oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this)">${item.content||''}</textarea>
+        <div class="sched-btns">
+          <button class="btn-del" onclick="delSched(${idx})" title="削除">×</button>
+          <button class="btn-memo" onclick="toggleMemo(${curDay},${idx})" title="メモ">📝</button>
+        </div>
+        ${item.memoOpen ? `<div class="sched-memo-wrap">
+          <textarea class="sched-memo-ta" placeholder="備考・メモを入力"
+            oninput="schedData[${curDay}][${idx}].memo=this.value;autoResize(this)">${item.memo||''}</textarea>
+        </div>` : (item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : '')}
+      `;
+    } else {
+      // ── 閲覧モード ──
+      const timeLabel = item.time || '──:──';
+      const contentLabel = item.content || '（予定なし）';
+      d.innerHTML = `
+        <span class="sched-time-view">${timeLabel}</span>
+        <div class="sched-content-view">${contentLabel}</div>
+        <div></div>
+        ${item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : ''}
+      `;
+    }
     list.appendChild(d);
   });
-  // 既存テキストがある場合は描画後に高さを合わせる
-  list.querySelectorAll('.sched-ta').forEach(ta => autoResize(ta));
+
+  if (schedEditMode) {
+    list.querySelectorAll('.sched-ta').forEach(ta => autoResize(ta));
+    list.querySelectorAll('.sched-memo-ta').forEach(ta => autoResize(ta));
+  }
 }
-function delSched(idx){ schedData[curDay].splice(idx,1); renderSched(); }
+
+function delSched(idx){
+  if(!confirm('この予定を削除しますか？')) return;
+  schedData[curDay].splice(idx,1);
+  renderSched();
+}
 
 // === PACKING ===
 const DEF_PACKS=[
