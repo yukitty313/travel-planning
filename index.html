@@ -13,12 +13,12 @@
 // FIREBASE 初期化
 // ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, arrayUnion, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBkqPU9eB8SJImlv5LM2eq1DQQs9ALCBj4",
-  authDomain: "travel-planning-bdef5.firebaseapp.com",
+  authDomain: "travel-planning-bdef5.firebaseapp.com", // GitHub Pagesで使う場合もこのままでOK
   projectId: "travel-planning-bdef5",
   storageBucket: "travel-planning-bdef5.firebasestorage.app",
   messagingSenderId: "147099236864",
@@ -33,9 +33,12 @@ const googleProvider = new GoogleAuthProvider();
 // グローバルに公開（既存JSから参照できるよう）
 window._fb = { auth, db, googleProvider,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signInWithPopup, signOut, updateProfile, onAuthStateChanged,
+  signInWithPopup, signInWithRedirect, getRedirectResult, signOut, updateProfile, onAuthStateChanged,
   doc, setDoc, getDoc, collection, query, where, getDocs,
   addDoc, updateDoc, arrayUnion, serverTimestamp, orderBy };
+
+// リダイレクト結果を処理（Googleリダイレクトログイン後）
+getRedirectResult(auth).catch(() => {});
 
 // 認証状態の監視
 onAuthStateChanged(auth, user => {
@@ -830,35 +833,6 @@ input[type="time"].sched-time {
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="hdr" id="hdr">
-  <div class="hdr-top">
-    <button class="btn-back" onclick="backToTrips()" style="font-size:0.75rem;padding:5px 12px;">← 旅行一覧</button>
-    <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
-    <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
-  </div>
-
-  <!-- 概要バー（タイトル直下）: 目的地 | 日付 横並び -->
-  <div class="overview-bar" onclick="openModal()">
-    <div class="ov-dest" id="ov-dest">目的地を設定する</div>
-    <div class="ov-divider" id="ov-divider" style="display:none"></div>
-    <div class="ov-dates" id="ov-dates"></div>
-  </div>
-
-  <!-- ⑤ タブ：ガラス調 -->
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
-      <span class="t-ico">📅</span> 日程表
-    </button>
-    <button class="tab-btn" data-tab="packing" onclick="showTab('packing',this)">
-      <span class="t-ico">🎒</span> 持ち物
-    </button>
-    <button class="tab-btn" data-tab="spots" onclick="showTab('spots',this)">
-      <span class="t-ico">📍</span> 行き先
-    </button>
-  </div>
-</header>
-
 <!-- ========== ログイン画面 ========== -->
 <div id="screen-login" class="screen">
   <div class="auth-wrap">
@@ -942,6 +916,30 @@ input[type="time"].sched-time {
 
 <!-- ========== メインアプリ ========== -->
 <div id="screen-app" class="screen" style="display:none">
+<!-- HEADER -->
+<header class="hdr" id="hdr">
+  <div class="hdr-top">
+    <button class="btn-back" onclick="backToTrips()" style="font-size:0.75rem;padding:5px 12px;">← 旅行一覧</button>
+    <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
+  </div>
+  <div class="overview-bar" onclick="openModal()">
+    <div class="ov-dest" id="ov-dest">目的地を設定する</div>
+    <div class="ov-divider" id="ov-divider" style="display:none"></div>
+    <div class="ov-dates" id="ov-dates"></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
+      <span class="t-ico">📅</span> 日程表
+    </button>
+    <button class="tab-btn" data-tab="packing" onclick="showTab('packing',this)">
+      <span class="t-ico">🎒</span> 持ち物
+    </button>
+    <button class="tab-btn" data-tab="spots" onclick="showTab('spots',this)">
+      <span class="t-ico">📍</span> 行き先
+    </button>
+  </div>
+</header>
 <!-- SCROLL AREA -->
 <div class="scroll-area" id="scroll-area">
 
@@ -1362,11 +1360,21 @@ function showAuthError(msg) {
 }
 
 async function loginGoogle() {
+  const { auth, googleProvider, signInWithPopup, signInWithRedirect } = window._fb;
   try {
-    const { auth, googleProvider, signInWithPopup } = window._fb;
+    // まずpopupを試みる
     await signInWithPopup(auth, googleProvider);
   } catch(e) {
-    showAuthError('Googleログインに失敗しました');
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      // popupがブロックされた場合はredirectにフォールバック
+      try {
+        await signInWithRedirect(auth, googleProvider);
+      } catch(e2) {
+        showAuthError('Googleログインに失敗しました');
+      }
+    } else {
+      showAuthError('Googleログインに失敗しました: ' + (e.message || ''));
+    }
   }
 }
 
