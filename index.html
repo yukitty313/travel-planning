@@ -30,11 +30,26 @@
 /* ① 背景が切れないよう html/body 両方に固定背景 */
 html {
   min-height: 100%;
-  background: linear-gradient(170deg,
+  /* ④ background-color を末端色に合わせることで上下余白の白切れを防止 */
+  background-color: #1a7aa8;
+  background-image: linear-gradient(170deg,
     var(--sky1) 0%, var(--sky2) 28%,
     var(--sea1) 60%, var(--sea2) 82%,
     var(--deep) 100%);
   background-attachment: fixed;
+  background-size: 100% 100vh; /* iOS では fixed が効かないため 100vh で固定 */
+}
+/* iOS Safari では background-attachment:fixed が効かないので
+   ::before 擬似要素で固定背景を再現 */
+html::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(170deg,
+    #c8edfa 0%, #8ed8f5 28%,
+    #5bbfe0 60%, #2ea3cc 82%,
+    #1a7aa8 100%);
 }
 body {
   font-family: 'Noto Sans JP', sans-serif;
@@ -330,7 +345,9 @@ body {
 .day-scroll {
   display: flex; gap: 7px;
   overflow-x: auto;
-  padding-bottom: 12px; margin-bottom: 14px;
+  /* ③ カード外：左右パディングでスクロールエリアに合わせる */
+  padding: 10px 2px 10px;
+  margin-bottom: 8px;
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .day-scroll::-webkit-scrollbar { display: none; }
@@ -385,9 +402,12 @@ input[type="time"].sched-time {
 }
 .sched-ta {
   resize: none;
-  height: 36px; /* ③ time と同じ高さ */
+  height: 36px;
+  min-height: 36px;
+  max-height: 300px;
   line-height: 1.5;
   padding: 6px 2px;
+  overflow-y: hidden;
 }
 .add-center { display: flex; justify-content: center; margin-top: 14px; }
 
@@ -491,7 +511,7 @@ input[type="time"].sched-time {
 <header class="hdr" id="hdr">
   <div class="hdr-top">
     <!-- ① タイトル変更 -->
-    <div class="logo">🌊 TRAVEL <em>Planning</em></div>
+    <div class="logo">✈ TRAVEL <em>Planning</em></div>
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
 
@@ -527,11 +547,8 @@ input[type="time"].sched-time {
 
   <!-- 日程表 -->
   <div class="panel active" id="panel-schedule">
-    <!-- ④ day-scroll を g-card の外に置いてスクロールエリア内に収める -->
-    <div class="g-card" style="padding-bottom:4px;">
-      <div class="day-scroll" id="day-selector">
-        <div class="empty" style="padding:8px 0;opacity:0.6;font-size:0.8rem;">出発日・帰着日を設定するとDayタブが表示されます</div>
-      </div>
+    <div class="day-scroll" id="day-selector">
+      <div class="day-placeholder" style="padding:4px 0;opacity:0.6;font-size:0.78rem;color:#4a8aaa;white-space:nowrap;">出発日・帰着日を設定するとDayタブが表示されます</div>
     </div>
     <div class="g-card">
       <div class="sched-list" id="sched-list">
@@ -683,6 +700,12 @@ function addSched(){
   schedData[curDay].push({time:'',content:''});
   renderSched();
 }
+// ② textarea 自動拡張
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
 function renderSched(){
   const list=document.getElementById('sched-list'), items=schedData[curDay]||[];
   if(!items.length){ list.innerHTML='<div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>'; return; }
@@ -690,10 +713,12 @@ function renderSched(){
   items.forEach((item,idx)=>{
     const d=document.createElement('div'); d.className='sched-item';
     d.innerHTML=`<input class="l-inp sched-time" type="time" value="${item.time}" oninput="schedData[${curDay}][${idx}].time=this.value">
-<textarea class="l-inp sched-ta" placeholder="予定・メモを入力" oninput="schedData[${curDay}][${idx}].content=this.value">${item.content}</textarea>
+<textarea class="l-inp sched-ta" placeholder="予定・メモを入力" oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this)">${item.content}</textarea>
 <button class="btn-del" onclick="delSched(${idx})">×</button>`;
     list.appendChild(d);
   });
+  // 既存テキストがある場合は描画後に高さを合わせる
+  list.querySelectorAll('.sched-ta').forEach(ta => autoResize(ta));
 }
 function delSched(idx){ schedData[curDay].splice(idx,1); renderSched(); }
 
