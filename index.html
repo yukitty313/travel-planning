@@ -3,326 +3,295 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>旅のてびき</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
 :root {
-  --deep:    #03293d;
-  --mid:     #0a4f6e;
-  --ocean:   #0e6b8a;
-  --teal:    #2bbcd4;
-  --foam:    #a8eaf4;
-  --white:   #ffffff;
-  --glass:   rgba(255,255,255,0.13);
-  --glass-b: rgba(255,255,255,0.28);
-  --glass-hover: rgba(255,255,255,0.2);
-  --shadow:  0 8px 32px rgba(0,30,60,0.28);
-  --r:       18px;
-  --bottom-h: 70px;
+  --sky1:   #d4f1fb;
+  --sky2:   #9eddf5;
+  --sea1:   #5bbfe0;
+  --sea2:   #2ea3cc;
+  --deep:   #1a7aa8;
+  --sand:   #f7edd8;
+  --white:  #ffffff;
+  --glass:  rgba(255,255,255,0.38);
+  --glass2: rgba(255,255,255,0.22);
+  --glassborder: rgba(255,255,255,0.65);
+  --shadow: 0 6px 28px rgba(30,120,170,0.18);
+  --text:   #1a4a60;
+  --textsub:#4a8aaa;
+  --r: 20px;
+  --hdr-h: 116px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
-
+html { height: 100%; }
 body {
   font-family: 'Noto Sans JP', sans-serif;
-  background: linear-gradient(175deg, var(--deep) 0%, var(--mid) 45%, var(--ocean) 75%, #1a9fb8 100%);
+  min-height: 100dvh;
+  background: linear-gradient(170deg,
+    var(--sky1) 0%,
+    var(--sky2) 28%,
+    var(--sea1) 60%,
+    var(--sea2) 82%,
+    var(--deep) 100%);
   background-attachment: fixed;
-  color: var(--white);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
-}
-
-/* ===== LAYOUT SHELL ===== */
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  height: 100vh;
-  max-width: 480px;
-  margin: 0 auto;
-  position: relative;
+  overflow-x: hidden;
 }
 
 /* ===== HEADER ===== */
 .hdr {
-  flex-shrink: 0;
-  padding: 52px 20px 0;
-  padding-top: max(52px, env(safe-area-inset-top, 20px) + 16px);
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 2px 20px rgba(30,120,170,0.1);
 }
 
-.hdr-inner {
+.hdr-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 10px 16px 8px;
 }
 
 .logo {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.65rem;
-  color: var(--white);
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-.logo-sub {
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 300;
-  color: var(--foam);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.btn-pdf {
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.32);
-  border-radius: 50px;
-  padding: 8px 16px;
-  color: var(--white);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--deep);
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: background 0.18s;
-  -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
-  margin-top: 4px;
+  gap: 6px;
 }
-.btn-pdf:active { background: rgba(255,255,255,0.26); }
+.logo-wave { color: var(--sea1); }
 
-/* 旅行概要バー */
-.trip-bar {
+.trip-pill {
   background: var(--glass);
-  border: 1px solid var(--glass-b);
-  border-radius: 14px;
-  padding: 10px 14px;
+  border: 1.5px solid var(--glassborder);
+  border-radius: 50px;
+  padding: 6px 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 7px;
   cursor: pointer;
-  transition: background 0.18s;
+  transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
+  max-width: 200px;
 }
-.trip-bar:active { background: var(--glass-hover); }
-.trip-dest {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1rem;
-  flex: 1;
+.trip-pill:active { background: rgba(255,255,255,0.55); }
+.trip-dest-txt {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.trip-dates {
-  font-size: 0.72rem;
-  color: var(--foam);
-  font-weight: 300;
+.trip-date-txt {
+  font-size: 0.68rem;
+  color: var(--textsub);
   white-space: nowrap;
 }
-.trip-edit-icon {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
+
+.btn-pdf {
+  background: linear-gradient(135deg, var(--sea1), var(--sea2));
+  border: none;
+  border-radius: 50px;
+  padding: 7px 14px;
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(46,163,204,0.35);
+  transition: box-shadow 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; gap: 4px;
+}
+.btn-pdf:active { transform: scale(0.96); }
+
+/* ===== TABバー（ヘッダー下部固定）===== */
+.tab-bar {
+  display: flex;
+  padding: 6px 14px 10px;
+  gap: 7px;
 }
 
-/* 波SVG */
-.wave-wrap {
-  height: 28px;
-  overflow: hidden;
-  margin: 0 -20px;
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  border: none;
+  border-radius: 50px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  color: var(--textsub);
+  white-space: nowrap;
 }
-.wave-wrap svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.tab-btn.active {
+  background: var(--white);
+  color: var(--deep);
+  box-shadow: 0 3px 14px rgba(30,120,170,0.18);
 }
-.wave-path {
-  animation: waveShift 6s ease-in-out infinite alternate;
-  transform-origin: center;
-}
-@keyframes waveShift {
-  0%   { d: path("M0,14 C80,4 160,24 240,14 C320,4 400,22 480,14 L480,28 L0,28 Z"); }
-  100% { d: path("M0,18 C80,8 160,26 240,16 C320,6 400,24 480,18 L480,28 L0,28 Z"); }
-}
+.tab-btn .t-ico { font-size: 1rem; }
 
 /* ===== SCROLL AREA ===== */
 .scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px 16px calc(var(--bottom-h) + 24px);
-  scroll-behavior: smooth;
+  padding-top: calc(var(--hdr-h) + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+  padding-left: 14px;
+  padding-right: 14px;
 }
-.scroll-area::-webkit-scrollbar { display: none; }
 
 /* ===== PANELS ===== */
-.panel { display: none; }
+.panel { display: none; padding-top: 16px; }
 .panel.active { display: block; }
 
 /* ===== GLASS CARD ===== */
-.glass-card {
+.g-card {
   background: var(--glass);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1.5px solid var(--glass-b);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid var(--glassborder);
   border-radius: var(--r);
   padding: 16px;
   box-shadow: var(--shadow);
   margin-bottom: 12px;
 }
 
-.card-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1rem;
-  color: var(--foam);
+.card-head {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--deep);
   margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* ===== INPUTS 共通 ===== */
-.field-inp {
+/* ===== INPUTS ===== */
+.f-inp {
   width: 100%;
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.8);
   border-radius: 12px;
   padding: 11px 14px;
-  color: var(--white);
+  color: var(--text);
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 0.88rem;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.18s, background 0.18s;
   -webkit-appearance: none;
 }
-.field-inp::placeholder { color: rgba(255,255,255,0.32); }
-.field-inp:focus {
-  border-color: var(--teal);
-  background: rgba(255,255,255,0.16);
-}
+.f-inp::placeholder { color: rgba(30,100,140,0.38); }
+.f-inp:focus { border-color: var(--sea1); background: rgba(255,255,255,0.75); }
 
-.inline-inp {
+.l-inp {
   background: transparent;
   border: none;
-  border-bottom: 1.5px solid rgba(255,255,255,0.2);
-  color: var(--white);
+  border-bottom: 1.5px solid rgba(30,120,170,0.2);
+  color: var(--text);
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 0.86rem;
   outline: none;
-  padding: 3px 2px;
+  padding: 4px 2px;
   width: 100%;
-  transition: border-color 0.2s;
+  transition: border-color 0.18s;
 }
-.inline-inp::placeholder { color: rgba(255,255,255,0.3); }
-.inline-inp:focus { border-color: var(--teal); }
+.l-inp::placeholder { color: rgba(30,100,140,0.32); }
+.l-inp:focus { border-color: var(--sea1); }
 
-/* ===== BTN共通 ===== */
+/* ===== BUTTONS ===== */
 .btn-add {
-  background: rgba(255,255,255,0.14);
-  border: 1.5px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.6);
+  border: 1.5px solid rgba(255,255,255,0.9);
   border-radius: 50px;
-  padding: 9px 18px;
-  color: var(--white);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 500;
+  padding: 10px 20px;
+  color: var(--deep);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  display: flex; align-items: center; gap: 5px;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
   min-height: 44px;
+  box-shadow: 0 2px 10px rgba(30,120,170,0.1);
 }
-.btn-add:active { background: rgba(255,255,255,0.24); }
+.btn-add:active { background: rgba(255,255,255,0.8); }
 
 .btn-del {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(30,120,170,0.15);
   border-radius: 50%;
-  width: 32px; height: 32px;
-  min-width: 32px;
-  color: rgba(255,255,255,0.55);
+  width: 32px; height: 32px; min-width: 32px;
+  color: var(--textsub);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-del:active { background: rgba(255,100,100,0.25); color: #ffaaaa; }
+.btn-del:active { background: rgba(255,100,100,0.15); color: #cc4444; }
 
-/* ===== 概要モーダル ===== */
-.modal-overlay {
+/* ===== MODAL（概要シート）===== */
+.modal-ov {
   display: none;
-  position: fixed; inset: 0;
-  background: rgba(2,20,35,0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 200;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,60,90,0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   align-items: flex-end;
   justify-content: center;
 }
-.modal-overlay.open { display: flex; }
+.modal-ov.open { display: flex; }
 .modal-sheet {
-  background: linear-gradient(160deg, #0a4060 0%, #083550 100%);
-  border: 1.5px solid rgba(255,255,255,0.22);
-  border-radius: 24px 24px 0 0;
-  padding: 20px 20px 40px;
-  width: 100%;
-  max-width: 480px;
-  animation: slideUp 0.28s cubic-bezier(.34,1.3,.64,1);
+  background: linear-gradient(160deg, #e8f8fd 0%, #caf0fa 100%);
+  border: 1.5px solid rgba(255,255,255,0.8);
+  border-radius: 28px 28px 0 0;
+  padding: 18px 18px calc(32px + env(safe-area-inset-bottom,0px));
+  width: 100%; max-width: 480px;
+  animation: su .28s cubic-bezier(.34,1.3,.64,1);
 }
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-.modal-handle {
-  width: 40px; height: 4px;
-  background: rgba(255,255,255,0.25);
-  border-radius: 2px;
-  margin: 0 auto 18px;
-}
-.modal-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.1rem;
-  color: var(--foam);
-  margin-bottom: 16px;
-}
-.modal-fields { display: flex; flex-direction: column; gap: 10px; }
-.modal-field label {
-  display: block;
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.55);
-  letter-spacing: 0.07em;
-  margin-bottom: 4px;
-}
-.modal-close-row {
-  display: flex; justify-content: flex-end; margin-top: 18px;
-}
+@keyframes su { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-handle { width:40px;height:4px;background:rgba(30,120,170,0.2);border-radius:2px;margin:0 auto 16px; }
+.modal-title { font-family:'Nunito',sans-serif;font-weight:800;font-size:1.05rem;color:var(--deep);margin-bottom:14px; }
+.modal-fields { display:flex;flex-direction:column;gap:10px; }
+.modal-field label { display:block;font-size:0.68rem;font-weight:600;color:var(--textsub);letter-spacing:0.07em;margin-bottom:4px;text-transform:uppercase; }
+.modal-btm { display:flex;justify-content:flex-end;margin-top:16px; }
 .btn-done {
-  background: linear-gradient(135deg, var(--teal), var(--ocean));
+  background: linear-gradient(135deg, var(--sea1), var(--sea2));
   border: none; border-radius: 50px;
-  padding: 11px 28px;
+  padding: 12px 30px;
   color: white;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.9rem; font-weight: 500;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.92rem; font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(43,188,212,0.35);
+  box-shadow: 0 4px 16px rgba(46,163,204,0.35);
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -330,306 +299,230 @@ body {
 
 /* ===== 日程表 ===== */
 .day-scroll {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  display: flex; gap: 7px;
+  overflow-x: auto; padding-bottom: 12px; margin-bottom: 14px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .day-scroll::-webkit-scrollbar { display: none; }
 
 .day-chip {
   flex-shrink: 0;
-  background: rgba(255,255,255,0.12);
-  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.45);
+  border: 1.5px solid rgba(255,255,255,0.8);
   border-radius: 50px;
   padding: 8px 18px;
-  color: rgba(255,255,255,0.72);
-  font-size: 0.82rem;
-  font-weight: 500;
+  color: var(--textsub);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem; font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
-  min-height: 38px;
-  display: flex; align-items: center;
+  min-height: 38px; display: flex; align-items: center;
 }
 .day-chip.active {
-  background: rgba(43,188,212,0.3);
-  border-color: var(--teal);
-  color: var(--white);
+  background: var(--deep);
+  border-color: var(--deep);
+  color: white;
+  box-shadow: 0 3px 12px rgba(26,122,168,0.35);
 }
 
-.sched-items { display: flex; flex-direction: column; gap: 10px; }
+.sched-list { display: flex; flex-direction: column; gap: 9px; }
 .sched-item {
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-left: 3px solid var(--teal);
+  background: rgba(255,255,255,0.48);
+  border: 1px solid rgba(255,255,255,0.75);
+  border-left: 3px solid var(--sea1);
   border-radius: 0 14px 14px 0;
   padding: 12px 12px 12px 14px;
   display: grid;
-  grid-template-columns: 78px 1fr 32px;
-  gap: 10px;
-  align-items: start;
+  grid-template-columns: 76px 1fr 32px;
+  gap: 10px; align-items: start;
 }
-.sched-time {
-  color: var(--foam) !important;
-  font-size: 0.82rem !important;
-  font-weight: 500;
-}
-.sched-ta {
-  resize: none;
-  height: 44px;
-  line-height: 1.5;
-}
-
-.add-btn-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 14px;
-}
+.sched-time { color: var(--sea2) !important; font-weight: 600; font-size: 0.82rem !important; }
+.sched-ta { resize: none; height: 44px; line-height: 1.5; }
+.add-center { display: flex; justify-content: center; margin-top: 14px; }
 
 /* ===== 持ち物 ===== */
 .cat-scroll {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  margin-bottom: 14px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  display: flex; gap: 7px;
+  overflow-x: auto; padding-bottom: 10px; margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .cat-scroll::-webkit-scrollbar { display: none; }
 
 .cat-chip {
   flex-shrink: 0;
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.42);
+  border: 1.5px solid rgba(255,255,255,0.75);
   border-radius: 50px;
   padding: 7px 15px;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.78rem;
+  color: var(--textsub);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem; font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
-  min-height: 36px;
-  display: flex; align-items: center;
+  min-height: 36px; display: flex; align-items: center;
 }
 .cat-chip.active {
-  background: rgba(43,188,212,0.25);
-  border-color: var(--teal);
-  color: var(--white);
+  background: var(--deep);
+  border-color: var(--deep);
+  color: white;
 }
 
-.pack-count-badge {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.1);
+.pack-badge {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--textsub);
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.7);
   border-radius: 50px;
-  padding: 3px 10px;
+  padding: 3px 11px;
 }
 
-.pack-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.pack-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
 .pack-item {
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
+  background: rgba(255,255,255,0.48);
+  border: 1px solid rgba(255,255,255,0.72);
+  border-radius: 14px;
   padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 48px;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
-  min-height: 48px;
 }
 .pack-item.checked {
-  background: rgba(43,188,212,0.12);
-  border-color: rgba(43,188,212,0.3);
+  background: rgba(91,191,224,0.18);
+  border-color: rgba(91,191,224,0.4);
 }
 .pack-cb {
-  width: 20px; height: 20px;
-  min-width: 20px;
-  accent-color: var(--teal);
-  cursor: pointer;
+  width: 20px; height: 20px; min-width: 20px;
+  accent-color: var(--sea2); cursor: pointer;
 }
-.pack-label {
-  flex: 1;
-  font-size: 0.88rem;
-  cursor: pointer;
-  color: var(--white);
-}
-.pack-item.checked .pack-label {
-  text-decoration: line-through;
-  color: rgba(255,255,255,0.42);
-}
+.pack-label { flex: 1; font-size: 0.88rem; color: var(--text); cursor: pointer; }
+.pack-item.checked .pack-label { text-decoration: line-through; color: var(--textsub); }
 
-.add-pack-row {
-  display: flex;
-  gap: 8px;
-}
+.add-pack-row { display: flex; gap: 8px; }
 .add-pack-sel {
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.8);
   border-radius: 12px;
   padding: 0 10px;
-  color: white;
+  color: var(--text);
   font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.8rem;
-  outline: none;
+  font-size: 0.8rem; outline: none;
   -webkit-appearance: none;
   min-height: 44px;
 }
-.add-pack-sel option { background: #083550; }
+.add-pack-sel option { background: #e8f8fd; color: var(--text); }
 
 /* ===== 行き先メモ ===== */
-.spots-list { display: flex; flex-direction: column; gap: 10px; }
+.spots-list { display: flex; flex-direction: column; gap: 12px; }
 .spot-card {
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.48);
+  border: 1.5px solid rgba(255,255,255,0.78);
   border-radius: var(--r);
   padding: 14px;
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(30,120,170,0.1);
 }
 .spot-accent {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
   border-radius: var(--r) var(--r) 0 0;
 }
-.spot-name-inp {
-  font-size: 0.95rem;
-  font-weight: 500;
-  margin-bottom: 8px;
-  margin-top: 6px;
-}
-.spot-addr-inp { font-size: 0.8rem; margin-bottom: 8px; }
-.spot-type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.spot-name-inp { font-size: 0.96rem; font-weight: 600; margin-bottom: 8px; margin-top: 8px; }
+.spot-addr-inp { font-size: 0.8rem; margin-bottom: 8px; color: var(--textsub) !important; }
+.spot-addr-inp::placeholder { color: rgba(74,138,170,0.38) !important; }
+.spot-types { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .spot-type-tag {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(30,120,170,0.18);
   border-radius: 50px;
-  padding: 4px 11px;
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.72);
-  cursor: pointer;
+  padding: 4px 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.73rem; font-weight: 700;
+  color: var(--textsub); cursor: pointer;
   transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 .spot-type-tag.active {
-  background: rgba(43,188,212,0.3);
-  border-color: var(--teal);
+  background: var(--deep);
+  border-color: var(--deep);
   color: white;
 }
-.spot-ta-inp { font-size: 0.82rem; resize: none; height: 52px; margin-bottom: 8px; }
-.spot-footer { display: flex; justify-content: flex-end; }
+.spot-memo-inp { font-size: 0.82rem; resize: none; height: 52px; margin-bottom: 8px; }
+.spot-foot { display: flex; justify-content: flex-end; }
 .btn-del-text {
   background: none;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(30,120,170,0.2);
   border-radius: 50px;
   padding: 5px 14px;
-  color: rgba(255,255,255,0.5);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.75rem;
+  color: var(--textsub);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem; font-weight: 600;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-del-text:active { color: #ffaaaa; border-color: rgba(255,100,100,0.4); }
+.btn-del-text:active { color: #cc4444; border-color: rgba(200,60,60,0.3); }
 
-/* ===== EMPTY STATE ===== */
-.empty-state {
+/* ===== EMPTY ===== */
+.empty {
   text-align: center;
   padding: 36px 20px;
-  color: rgba(255,255,255,0.38);
+  color: var(--textsub);
   font-size: 0.85rem;
+  opacity: 0.7;
 }
-.empty-state .ico { font-size: 2.4rem; margin-bottom: 8px; }
-
-/* ===== BOTTOM NAV ===== */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  height: calc(var(--bottom-h) + env(safe-area-inset-bottom, 0px));
-  background: rgba(3,41,61,0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255,255,255,0.14);
-  display: flex;
-  align-items: flex-start;
-  padding-top: 6px;
-  z-index: 50;
-}
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 4px;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.45);
-  font-family: 'Noto Sans JP', sans-serif;
-  font-size: 0.65rem;
-  cursor: pointer;
-  transition: color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 44px;
-}
-.nav-btn.active { color: var(--foam); }
-.nav-icon { font-size: 1.4rem; line-height: 1; transition: transform 0.15s; }
-.nav-btn.active .nav-icon { transform: scale(1.12); }
-.nav-label { font-size: 0.62rem; letter-spacing: 0.04em; }
+.empty .ico { font-size: 2.4rem; margin-bottom: 8px; }
 </style>
 </head>
 <body>
 
-<div class="app">
-
-  <!-- HEADER -->
-  <div class="hdr">
-    <div class="hdr-inner">
+<!-- ===== FIXED HEADER ===== -->
+<header class="hdr">
+  <div class="hdr-top">
+    <div class="logo">🌊 <span>旅のてびき</span></div>
+    <div class="trip-pill" onclick="openModal()">
       <div>
-        <div class="logo">旅のてびき</div>
-        <div class="logo-sub">Travel Planner</div>
+        <div class="trip-dest-txt" id="hdr-dest">目的地を設定 ✏️</div>
+        <div class="trip-date-txt" id="hdr-dates"></div>
       </div>
-      <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
     </div>
-    <div class="trip-bar" onclick="openModal()">
-      <div class="trip-dest" id="hdr-dest">目的地を設定する</div>
-      <div class="trip-dates" id="hdr-dates"></div>
-      <div class="trip-edit-icon">✏️</div>
-    </div>
-    <div class="wave-wrap">
-      <svg viewBox="0 0 480 28" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path class="wave-path" fill="rgba(255,255,255,0.06)"
-          d="M0,14 C80,4 160,24 240,14 C320,4 400,22 480,14 L480,28 L0,28 Z"/>
-        <path fill="rgba(255,255,255,0.04)"
-          d="M0,20 C100,10 200,26 300,18 C380,12 440,22 480,20 L480,28 L0,28 Z"/>
-      </svg>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
+      <span class="t-ico">📅</span> 日程表
+    </button>
+    <button class="tab-btn" data-tab="packing" onclick="showTab('packing',this)">
+      <span class="t-ico">🎒</span> 持ち物
+    </button>
+    <button class="tab-btn" data-tab="spots" onclick="showTab('spots',this)">
+      <span class="t-ico">📍</span> 行き先
+    </button>
+  </div>
+</header>
+
+<!-- ===== SCROLL AREA ===== -->
+<div class="scroll-area">
+
+  <!-- 日程表 -->
+  <div class="panel active" id="panel-schedule">
+    <div class="day-scroll" id="day-selector"></div>
+    <div class="g-card">
+      <div class="sched-list" id="sched-list">
+        <div class="empty"><div class="ico">🌅</div>出発日・帰着日を設定すると<br>Dayタブが表示されます</div>
+      </div>
+      <div class="add-center" style="margin-top:14px;">
+        <button class="btn-add" onclick="addSched()">＋ 予定を追加</button>
+      </div>
     </div>
   </div>
 
-  <!-- SCROLL AREA -->
-  <div class="scroll-area">
-
-    <!-- 日程表 -->
-    <div class="panel active" id="panel-schedule">
-      <div class="day-scroll" id="day-selector"></div>
-      <div id="schedule-list">
-        <div class="empty-state"><div class="ico">🌅</div>出発日・帰着日を設定すると<br>Day別タブが表示されます</div>
-      </div>
-      <div class="add-btn-row">
-        <button class="btn-add" onclick="addScheduleItem()">＋ 予定を追加</button>
-      </div>
-    </div>
-
-    <!-- 持ち物 -->
-    <div class="panel" id="panel-packing">
-      <div class="cat-scroll" id="pack-cats">
+  <!-- 持ち物 -->
+  <div class="panel" id="panel-packing">
+    <div class="g-card">
+      <div class="cat-scroll">
         <div class="cat-chip active" onclick="filterCat('all',this)">すべて</div>
         <div class="cat-chip" onclick="filterCat('衣類',this)">👕 衣類</div>
         <div class="cat-chip" onclick="filterCat('洗面',this)">🧴 洗面</div>
@@ -637,10 +530,10 @@ body {
         <div class="cat-chip" onclick="filterCat('電子機器',this)">🔌 電子機器</div>
         <div class="cat-chip" onclick="filterCat('その他',this)">📦 その他</div>
       </div>
-      <div id="pack-count-wrap" style="margin-bottom:10px;"></div>
+      <div style="margin-bottom:10px;"><span class="pack-badge" id="pack-count">0 / 0 完了</span></div>
       <div class="pack-list" id="pack-list"></div>
       <div class="add-pack-row">
-        <input class="field-inp" style="flex:1" type="text" id="new-pack" placeholder="持ち物を追加" onkeydown="if(event.key==='Enter')addPackItem()">
+        <input class="f-inp" style="flex:1" type="text" id="new-pack" placeholder="持ち物を追加" onkeydown="if(event.key==='Enter')addPack()">
         <select class="add-pack-sel" id="new-pack-cat">
           <option value="衣類">👕</option>
           <option value="洗面">🧴</option>
@@ -648,408 +541,233 @@ body {
           <option value="電子機器">🔌</option>
           <option value="その他">📦</option>
         </select>
-        <button class="btn-add" onclick="addPackItem()" style="padding:0 16px;">＋</button>
+        <button class="btn-add" onclick="addPack()" style="padding:0 16px;min-width:52px;">＋</button>
       </div>
     </div>
+  </div>
 
-    <!-- 行き先メモ -->
-    <div class="panel" id="panel-spots">
-      <div class="spots-list" id="spots-list">
-        <div class="empty-state"><div class="ico">📍</div>行きたい場所を追加しよう</div>
-      </div>
-      <div class="add-btn-row" style="margin-top:14px;">
-        <button class="btn-add" onclick="addSpot()">＋ スポットを追加</button>
-      </div>
+  <!-- 行き先メモ -->
+  <div class="panel" id="panel-spots">
+    <div class="spots-list" id="spots-list">
+      <div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>
     </div>
+    <div class="add-center" style="margin-top:14px;">
+      <button class="btn-add" onclick="addSpot()">＋ スポットを追加</button>
+    </div>
+  </div>
 
-  </div><!-- /scroll-area -->
+</div>
 
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
-      <span class="nav-icon">📅</span>
-      <span class="nav-label">日程表</span>
-    </button>
-    <button class="nav-btn" data-tab="packing" onclick="showTab('packing',this)">
-      <span class="nav-icon">🎒</span>
-      <span class="nav-label">持ち物</span>
-    </button>
-    <button class="nav-btn" data-tab="spots" onclick="showTab('spots',this)">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-label">行き先</span>
-    </button>
-  </nav>
-
-</div><!-- /app -->
-
-<!-- 概要モーダル -->
-<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+<!-- ===== MODAL ===== -->
+<div class="modal-ov" id="modal" onclick="closeOut(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">旅行の概要</div>
+    <div class="modal-title">✈️ 旅行の概要</div>
     <div class="modal-fields">
-      <div>
-        <label>旅先・目的地</label>
-        <input class="field-inp" type="text" id="dest" placeholder="例: 沖縄" oninput="updateHeader()">
-      </div>
+      <div class="modal-field"><label>目的地</label><input class="f-inp" type="text" id="dest" placeholder="例: 沖縄・石垣島" oninput="updateHdr()"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label>出発日</label>
-          <input class="field-inp" type="date" id="start-date" oninput="updateHeader();syncDays()">
-        </div>
-        <div>
-          <label>帰着日</label>
-          <input class="field-inp" type="date" id="end-date" oninput="updateHeader();syncDays()">
-        </div>
+        <div class="modal-field"><label>出発日</label><input class="f-inp" type="date" id="start-date" oninput="updateHdr();syncDays()"></div>
+        <div class="modal-field"><label>帰着日</label><input class="f-inp" type="date" id="end-date" oninput="updateHdr();syncDays()"></div>
       </div>
-      <div>
-        <label>メンバー</label>
-        <input class="field-inp" type="text" id="members" placeholder="例: 大人2名">
-      </div>
-      <div>
-        <label>宿泊先</label>
-        <input class="field-inp" type="text" id="hotel" placeholder="例: ○○ホテル">
-      </div>
-      <div>
-        <label>メモ</label>
-        <input class="field-inp" type="text" id="trip-memo" placeholder="例: 夏休み旅行">
-      </div>
+      <div class="modal-field"><label>メンバー</label><input class="f-inp" type="text" id="members" placeholder="例: 大人2名 子1名"></div>
+      <div class="modal-field"><label>宿泊先</label><input class="f-inp" type="text" id="hotel" placeholder="例: ○○ホテル"></div>
+      <div class="modal-field"><label>メモ</label><input class="f-inp" type="text" id="trip-memo" placeholder="例: 夏休み旅行"></div>
     </div>
-    <div class="modal-close-row">
-      <button class="btn-done" onclick="closeModal()">完了</button>
-    </div>
+    <div class="modal-btm"><button class="btn-done" onclick="closeModal()">完了 ✓</button></div>
   </div>
 </div>
 
 <script>
-// ===== STATE =====
-let currentDay = 1, totalDays = 1;
-let scheduleData = {};
-let packItems = [];
-let spots = [];
-let currentCatFilter = 'all';
+// === STATE ===
+let curDay=1, totalDays=1;
+let schedData={}, packItems=[], spots=[], catFilter='all';
 
-const SPOT_ACCENTS = [
-  'linear-gradient(90deg,#2bbcd4,#0e6b8a)',
-  'linear-gradient(90deg,#56ccf2,#2bbcd4)',
-  'linear-gradient(90deg,#a8eaf4,#2bbcd4)',
-  'linear-gradient(90deg,#0e6b8a,#2bbcd4)',
-  'linear-gradient(90deg,#74b9ff,#2bbcd4)',
+const SPOT_ACCENTS=[
+  'linear-gradient(90deg,#5bbfe0,#2ea3cc)',
+  'linear-gradient(90deg,#9eddf5,#5bbfe0)',
+  'linear-gradient(90deg,#2ea3cc,#1a7aa8)',
+  'linear-gradient(90deg,#74c8e8,#2ea3cc)',
+  'linear-gradient(90deg,#aae8f8,#5bbfe0)',
 ];
-const SPOT_TYPES = ['観光', 'グルメ', 'ショッピング', '宿泊', 'その他'];
+const SPOT_TYPES=['観光','グルメ','ショッピング','宿泊','その他'];
 
-// ===== MODAL =====
-function openModal() { document.getElementById('modal').classList.add('open'); }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+// === MODAL ===
+function openModal(){ document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function closeOut(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
-// ===== HEADER =====
-function updateHeader() {
-  const dest = document.getElementById('dest').value;
-  const s = document.getElementById('start-date').value;
-  const e = document.getElementById('end-date').value;
-  document.getElementById('hdr-dest').textContent = dest || '目的地を設定する';
-  if (s && e) {
-    const sd = new Date(s), ed = new Date(e);
-    const d = Math.ceil((ed - sd) / 86400000) + 1;
-    document.getElementById('hdr-dates').textContent =
-      `${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
-  } else {
-    document.getElementById('hdr-dates').textContent = '';
-  }
+// === HEADER ===
+function updateHdr(){
+  const dest=document.getElementById('dest').value;
+  const s=document.getElementById('start-date').value, e=document.getElementById('end-date').value;
+  document.getElementById('hdr-dest').textContent=(dest||'目的地を設定')+' ✏️';
+  if(s&&e){
+    const sd=new Date(s),ed=new Date(e),d=Math.ceil((ed-sd)/86400000)+1;
+    document.getElementById('hdr-dates').textContent=`${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
+  } else document.getElementById('hdr-dates').textContent='';
 }
 
-function syncDays() {
-  const s = document.getElementById('start-date').value;
-  const e = document.getElementById('end-date').value;
-  if (!s || !e) return;
-  totalDays = Math.max(1, Math.ceil((new Date(e) - new Date(s)) / 86400000) + 1);
-  renderDaySelector();
+function syncDays(){
+  const s=document.getElementById('start-date').value, e=document.getElementById('end-date').value;
+  if(!s||!e)return;
+  totalDays=Math.max(1,Math.ceil((new Date(e)-new Date(s))/86400000)+1);
+  renderDays();
 }
 
-// ===== SCHEDULE =====
-function renderDaySelector() {
-  const sel = document.getElementById('day-selector');
-  sel.innerHTML = '';
-  for (let i = 1; i <= totalDays; i++) {
-    const c = document.createElement('div');
-    c.className = 'day-chip' + (i === currentDay ? ' active' : '');
-    const sd = document.getElementById('start-date').value;
-    let label = `Day ${i}`;
-    if (sd) {
-      const d = new Date(sd);
-      d.setDate(d.getDate() + i - 1);
-      label = `${d.getMonth()+1}/${d.getDate()}`;
-    }
-    c.textContent = label;
-    c.onclick = () => { currentDay = i; renderDaySelector(); renderSchedule(); };
+// === SCHEDULE ===
+function renderDays(){
+  const sel=document.getElementById('day-selector'); sel.innerHTML='';
+  const sd=document.getElementById('start-date').value;
+  for(let i=1;i<=totalDays;i++){
+    const c=document.createElement('div'); c.className='day-chip'+(i===curDay?' active':'');
+    let label=`Day ${i}`;
+    if(sd){ const d=new Date(sd); d.setDate(d.getDate()+i-1); label=`${d.getMonth()+1}/${d.getDate()}`; }
+    c.textContent=label; c.onclick=()=>{curDay=i;renderDays();renderSched();};
     sel.appendChild(c);
   }
-  renderSchedule();
+  renderSched();
 }
 
-function addScheduleItem() {
-  if (!scheduleData[currentDay]) scheduleData[currentDay] = [];
-  scheduleData[currentDay].push({ time: '', content: '' });
-  renderSchedule();
+function addSched(){
+  if(!schedData[curDay])schedData[curDay]=[];
+  schedData[curDay].push({time:'',content:''});
+  renderSched();
 }
 
-function renderSchedule() {
-  const list = document.getElementById('schedule-list');
-  const items = scheduleData[currentDay] || [];
-  if (!items.length) {
-    list.innerHTML = '<div class="empty-state"><div class="ico">🌅</div>予定を追加しよう</div>';
-    return;
-  }
-  list.innerHTML = '';
-  items.forEach((item, idx) => {
-    const d = document.createElement('div');
-    d.className = 'sched-item';
-    d.innerHTML = `
-      <input class="inline-inp sched-time" type="time" value="${item.time}"
-        oninput="scheduleData[${currentDay}][${idx}].time=this.value">
-      <textarea class="inline-inp sched-ta" placeholder="予定・メモ"
-        oninput="scheduleData[${currentDay}][${idx}].content=this.value">${item.content}</textarea>
-      <button class="btn-del" onclick="delSchedule(${idx})">×</button>`;
+function renderSched(){
+  const list=document.getElementById('sched-list'), items=schedData[curDay]||[];
+  if(!items.length){ list.innerHTML='<div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>'; return; }
+  list.innerHTML='';
+  items.forEach((item,idx)=>{
+    const d=document.createElement('div'); d.className='sched-item';
+    d.innerHTML=`<input class="l-inp sched-time" type="time" value="${item.time}" oninput="schedData[${curDay}][${idx}].time=this.value">
+<textarea class="l-inp sched-ta" placeholder="予定・メモ" oninput="schedData[${curDay}][${idx}].content=this.value">${item.content}</textarea>
+<button class="btn-del" onclick="delSched(${idx})">×</button>`;
     list.appendChild(d);
   });
 }
+function delSched(idx){ schedData[curDay].splice(idx,1); renderSched(); }
 
-function delSchedule(idx) {
-  scheduleData[currentDay].splice(idx, 1);
-  renderSchedule();
-}
-
-// ===== PACKING =====
-const DEFAULT_PACKS = [
-  {name:'財布・現金',cat:'書類',checked:false},
-  {name:'クレジットカード',cat:'書類',checked:false},
-  {name:'身分証明書',cat:'書類',checked:false},
-  {name:'スマートフォン',cat:'電子機器',checked:false},
-  {name:'充電器',cat:'電子機器',checked:false},
-  {name:'モバイルバッテリー',cat:'電子機器',checked:false},
-  {name:'着替え（上）',cat:'衣類',checked:false},
-  {name:'着替え（下）',cat:'衣類',checked:false},
-  {name:'パジャマ',cat:'衣類',checked:false},
-  {name:'歯ブラシ',cat:'洗面',checked:false},
-  {name:'シャンプー',cat:'洗面',checked:false},
-  {name:'常備薬',cat:'その他',checked:false},
+// === PACKING ===
+const DEF_PACKS=[
+  {name:'財布・現金',cat:'書類',checked:false},{name:'クレジットカード',cat:'書類',checked:false},
+  {name:'身分証明書',cat:'書類',checked:false},{name:'スマートフォン',cat:'電子機器',checked:false},
+  {name:'充電器',cat:'電子機器',checked:false},{name:'モバイルバッテリー',cat:'電子機器',checked:false},
+  {name:'着替え（上）',cat:'衣類',checked:false},{name:'着替え（下）',cat:'衣類',checked:false},
+  {name:'パジャマ',cat:'衣類',checked:false},{name:'歯ブラシ',cat:'洗面',checked:false},
+  {name:'シャンプー',cat:'洗面',checked:false},{name:'常備薬',cat:'その他',checked:false},
 ];
-packItems = [...DEFAULT_PACKS];
+packItems=[...DEF_PACKS];
 
-function renderPacks() {
-  const list = document.getElementById('pack-list');
-  const filtered = currentCatFilter === 'all' ? packItems : packItems.filter(p => p.cat === currentCatFilter);
-  const ck = packItems.filter(p => p.checked).length;
-  document.getElementById('pack-count-wrap').innerHTML =
-    `<span class="pack-count-badge">${ck} / ${packItems.length} 完了</span>`;
-
-  if (!filtered.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:20px 0"><div class="ico">📦</div>このカテゴリは空です</div>';
-    return;
-  }
-  list.innerHTML = '';
-  filtered.forEach(item => {
-    const ri = packItems.indexOf(item);
-    const d = document.createElement('div');
-    d.className = 'pack-item' + (item.checked ? ' checked' : '');
-    d.innerHTML = `
-      <input class="pack-cb" type="checkbox" ${item.checked?'checked':''} onchange="togglePack(${ri})">
-      <span class="pack-label" onclick="togglePack(${ri})">${item.name}</span>
-      <button class="btn-del" onclick="delPack(${ri})">×</button>`;
+function renderPack(){
+  const list=document.getElementById('pack-list');
+  const filtered=catFilter==='all'?packItems:packItems.filter(p=>p.cat===catFilter);
+  const ck=packItems.filter(p=>p.checked).length;
+  document.getElementById('pack-count').textContent=`${ck} / ${packItems.length} 完了`;
+  if(!filtered.length){ list.innerHTML='<div class="empty" style="padding:16px 0"><div class="ico">📦</div>このカテゴリは空です</div>'; return; }
+  list.innerHTML='';
+  filtered.forEach(item=>{
+    const ri=packItems.indexOf(item), d=document.createElement('div');
+    d.className='pack-item'+(item.checked?' checked':'');
+    d.innerHTML=`<input class="pack-cb" type="checkbox" ${item.checked?'checked':''} onchange="togglePack(${ri})">
+<span class="pack-label" onclick="togglePack(${ri})">${item.name}</span>
+<button class="btn-del" onclick="delPack(${ri})">×</button>`;
     list.appendChild(d);
   });
 }
-
-function togglePack(idx) { packItems[idx].checked = !packItems[idx].checked; renderPacks(); }
-function delPack(idx) { packItems.splice(idx, 1); renderPacks(); }
-
-function filterCat(cat, el) {
-  currentCatFilter = cat;
-  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderPacks();
+function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); }
+function delPack(i){ packItems.splice(i,1); renderPack(); }
+function filterCat(cat,el){
+  catFilter=cat;
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); renderPack();
+}
+function addPack(){
+  const inp=document.getElementById('new-pack'), cat=document.getElementById('new-pack-cat').value;
+  if(!inp.value.trim())return;
+  packItems.push({name:inp.value.trim(),cat,checked:false}); inp.value=''; renderPack();
 }
 
-function addPackItem() {
-  const inp = document.getElementById('new-pack');
-  const cat = document.getElementById('new-pack-cat').value;
-  if (!inp.value.trim()) return;
-  packItems.push({ name: inp.value.trim(), cat, checked: false });
-  inp.value = '';
-  renderPacks();
-}
-
-// ===== SPOTS =====
-function addSpot() {
-  spots.push({ name: '', address: '', memo: '', type: '' });
-  renderSpots();
-}
-
-function renderSpots() {
-  const list = document.getElementById('spots-list');
-  if (!spots.length) {
-    list.innerHTML = '<div class="empty-state"><div class="ico">📍</div>行きたい場所を追加しよう</div>';
-    return;
-  }
-  list.innerHTML = '';
-  spots.forEach((spot, idx) => {
-    const d = document.createElement('div');
-    d.className = 'spot-card';
-    const accent = SPOT_ACCENTS[idx % SPOT_ACCENTS.length];
-    const tags = SPOT_TYPES.map(t =>
-      `<span class="spot-type-tag${spot.type===t?' active':''}" onclick="setSpotType(${idx},'${t}',this)">${t}</span>`
-    ).join('');
-    d.innerHTML = `
-      <div class="spot-accent" style="background:${accent}"></div>
-      <input class="inline-inp spot-name-inp" type="text" placeholder="スポット名"
-        value="${spot.name}" oninput="spots[${idx}].name=this.value">
-      <input class="inline-inp spot-addr-inp" type="text" placeholder="住所・アクセス"
-        value="${spot.address}" oninput="spots[${idx}].address=this.value">
-      <div class="spot-type-row">${tags}</div>
-      <textarea class="inline-inp spot-ta-inp" placeholder="メモ（営業時間・料金など）"
-        oninput="spots[${idx}].memo=this.value">${spot.memo}</textarea>
-      <div class="spot-footer">
-        <button class="btn-del-text" onclick="delSpot(${idx})">削除</button>
-      </div>`;
+// === SPOTS ===
+function addSpot(){ spots.push({name:'',address:'',memo:'',type:''}); renderSpots(); }
+function renderSpots(){
+  const list=document.getElementById('spots-list');
+  if(!spots.length){ list.innerHTML='<div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>'; return; }
+  list.innerHTML='';
+  spots.forEach((sp,idx)=>{
+    const d=document.createElement('div'); d.className='spot-card';
+    const acc=SPOT_ACCENTS[idx%SPOT_ACCENTS.length];
+    const tags=SPOT_TYPES.map(t=>`<span class="spot-type-tag${sp.type===t?' active':''}" onclick="setType(${idx},'${t}',this)">${t}</span>`).join('');
+    d.innerHTML=`<div class="spot-accent" style="background:${acc}"></div>
+<input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}" oninput="spots[${idx}].name=this.value">
+<input class="l-inp spot-addr-inp" type="text" placeholder="住所・アクセス" value="${sp.address}" oninput="spots[${idx}].address=this.value">
+<div class="spot-types">${tags}</div>
+<textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）" oninput="spots[${idx}].memo=this.value">${sp.memo}</textarea>
+<div class="spot-foot"><button class="btn-del-text" onclick="delSpot(${idx})">削除</button></div>`;
     list.appendChild(d);
   });
 }
-
-function setSpotType(idx, type, el) {
-  spots[idx].type = type;
-  el.closest('.spot-type-row').querySelectorAll('.spot-type-tag').forEach(t => t.classList.remove('active'));
+function setType(idx,type,el){
+  spots[idx].type=type;
+  el.closest('.spot-types').querySelectorAll('.spot-type-tag').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
-function delSpot(idx) { spots.splice(idx, 1); renderSpots(); }
+function delSpot(idx){ spots.splice(idx,1); renderSpots(); }
 
-// ===== TABS =====
-function showTab(name, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
+// === TABS ===
+function showTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
   btn.classList.add('active');
-  document.querySelector('.scroll-area').scrollTop = 0;
+  window.scrollTo({top:0});
 }
 
-// ===== PDF =====
-async function exportPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-  const dest = document.getElementById('dest').value || '旅行';
-  const s = document.getElementById('start-date').value;
-  const e = document.getElementById('end-date').value;
-  const members = document.getElementById('members').value;
-  const hotel = document.getElementById('hotel').value;
-  const tripMemo = document.getElementById('trip-memo').value;
-  const W = 210, H = 297, M = 14; let y = M;
-
-  doc.setFillColor(3,41,61); doc.rect(0,0,W,22,'F');
-  doc.setFillColor(43,188,212); doc.rect(0,19,W,3,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
-  doc.text('Travel Plan', M, 13);
-  doc.setFont('helvetica','normal'); doc.setFontSize(9);
-  doc.text(dest, W-M, 13, {align:'right'});
-  y = 30;
-
-  doc.setFillColor(235,248,252); doc.roundedRect(M,y,W-M*2,30,3,3,'F');
-  doc.setTextColor(3,41,61); doc.setFont('helvetica','bold'); doc.setFontSize(9);
-  doc.text('OVERVIEW', M+4, y+7);
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(20,60,80);
-  const ov = [`Destination: ${dest||'-'}`,`Period: ${s||'-'} ~ ${e||'-'}`,`Members: ${members||'-'}`,`Hotel: ${hotel||'-'}`,tripMemo?`Note: ${tripMemo}`:''].filter(Boolean);
-  ov.forEach((l,i) => { const col=i<3?0:1; doc.text(l, M+4+col*(W-M*2)/2, y+13+(i%3)*6); });
-  y += 38;
-
-  function chk(n=10){ if(y+n>H-M){ doc.addPage(); y=M; } }
-  function sec(t){
-    chk(12);
-    doc.setFillColor(43,188,212); doc.rect(M,y,3,8,'F');
-    doc.setTextColor(3,41,61); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text(t, M+6, y+5.5); y+=13;
-  }
-  function bln(txt, ind=0){
-    chk(7);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(30,55,70);
-    doc.splitTextToSize(txt, W-M*2-ind-6).forEach(l=>{ chk(6); doc.text(l,M+ind+4,y); y+=5.5; });
-  }
-  function hr(){
-    doc.setDrawColor(180,220,235); doc.setLineWidth(0.3);
-    doc.line(M,y,W-M,y); y+=5;
-  }
-
-  // 日程
+// === PDF ===
+async function exportPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const dest=document.getElementById('dest').value||'旅行';
+  const s=document.getElementById('start-date').value,e=document.getElementById('end-date').value;
+  const members=document.getElementById('members').value,hotel=document.getElementById('hotel').value,memo=document.getElementById('trip-memo').value;
+  const W=210,H=297,M=14;let y=M;
+  // ヘッダー
+  doc.setFillColor(30,120,168);doc.rect(0,0,W,22,'F');
+  doc.setFillColor(91,191,224);doc.rect(0,19,W,3,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(16);
+  doc.text('Travel Plan',M,13);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(dest,W-M,13,{align:'right'});
+  y=30;
+  // 概要
+  doc.setFillColor(232,248,253);doc.roundedRect(M,y,W-M*2,30,3,3,'F');
+  doc.setTextColor(26,74,96);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('OVERVIEW',M+4,y+7);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,80,110);
+  const ov=[`Destination: ${dest||'-'}`,`Period: ${s||'-'} ~ ${e||'-'}`,`Members: ${members||'-'}`,`Hotel: ${hotel||'-'}`,memo?`Note: ${memo}`:''].filter(Boolean);
+  ov.forEach((l,i)=>{const col=i<3?0:1;doc.text(l,M+4+col*(W-M*2)/2,y+13+(i%3)*6);});
+  y+=38;
+  function chk(n=10){if(y+n>H-M){doc.addPage();y=M;}}
+  function sec(t){chk(12);doc.setFillColor(91,191,224);doc.rect(M,y,3,8,'F');doc.setTextColor(26,74,96);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(t,M+6,y+5.5);y+=13;}
+  function bln(txt,ind=0){chk(7);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,80,110);doc.splitTextToSize(txt,W-M*2-ind-6).forEach(l=>{chk(6);doc.text(l,M+ind+4,y);y+=5.5;});}
+  function hr(){doc.setDrawColor(180,225,240);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=5;}
   sec('Schedule');
-  const hasSch = Object.values(scheduleData).some(d=>d.length>0);
-  if(!hasSch){ bln('No schedule entries.'); }
-  else {
-    for(let d=1;d<=totalDays;d++){
-      const items=scheduleData[d]||[]; if(!items.length) continue;
-      chk(10);
-      doc.setFillColor(220,244,250); doc.roundedRect(M+2,y-1,28,7,2,2,'F');
-      doc.setTextColor(3,41,61); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
-      doc.text(`Day ${d}`, M+6, y+4); y+=9;
-      items.forEach(item=>{
-        chk(7); const txt=(item.time?`[${item.time}] `:'')+(item.content||'(No content)');
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(30,55,70);
-        doc.setFillColor(43,188,212); doc.circle(M+7,y-1.5,1.5,'F');
-        doc.splitTextToSize(txt,W-M*2-12).forEach(l=>{ doc.text(l,M+12,y); y+=5.5; });
-      }); y+=3;
-    }
-  }
+  const hasSch=Object.values(schedData).some(d=>d.length>0);
+  if(!hasSch){bln('No schedule entries.');}
+  else{for(let d=1;d<=totalDays;d++){const items=schedData[d]||[];if(!items.length)continue;chk(10);doc.setFillColor(220,244,252);doc.roundedRect(M+2,y-1,28,7,2,2,'F');doc.setTextColor(26,74,96);doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.text(`Day ${d}`,M+6,y+4);y+=9;items.forEach(item=>{chk(7);const txt=(item.time?`[${item.time}] `:'')+(item.content||'(No content)');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(30,80,110);doc.setFillColor(91,191,224);doc.circle(M+7,y-1.5,1.5,'F');doc.splitTextToSize(txt,W-M*2-12).forEach(l=>{doc.text(l,M+12,y);y+=5.5;});});y+=3;}}
   hr();
-
-  // 持ち物
   sec('Packing List');
-  const cats = [...new Set(packItems.map(p=>p.cat))];
-  cats.forEach(cat=>{
-    const items=packItems.filter(p=>p.cat===cat); chk(8);
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(3,41,61);
-    doc.text(cat, M+4, y); y+=6;
-    const cols=3, colW=(W-M*2-8)/cols;
-    items.forEach((item,i)=>{
-      const col=i%cols,row=Math.floor(i/cols);
-      if(col===0&&row>0){ y+=6; chk(6); }
-      const cx=M+6+col*colW,cy=y;
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(30,55,70);
-      doc.setDrawColor(43,150,180); doc.rect(cx,cy-3.5,3.5,3.5);
-      if(item.checked){ doc.setDrawColor(43,188,212); doc.line(cx,cy-2,cx+1.5,cy-0.5); doc.line(cx+1.5,cy-0.5,cx+3.5,cy-3.5); }
-      doc.text(item.name, cx+5, cy-0.5);
-    });
-    y += Math.ceil(items.length/cols)*6+4;
-  });
+  const cats=[...new Set(packItems.map(p=>p.cat))];
+  cats.forEach(cat=>{const items=packItems.filter(p=>p.cat===cat);chk(8);doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(26,74,96);doc.text(cat,M+4,y);y+=6;const cols=3,colW=(W-M*2-8)/cols;items.forEach((item,i)=>{const col=i%cols,row=Math.floor(i/cols);if(col===0&&row>0){y+=6;chk(6);}const cx=M+6+col*colW,cy=y;doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,80,110);doc.setDrawColor(91,150,180);doc.rect(cx,cy-3.5,3.5,3.5);if(item.checked){doc.setDrawColor(91,191,224);doc.line(cx,cy-2,cx+1.5,cy-0.5);doc.line(cx+1.5,cy-0.5,cx+3.5,cy-3.5);}doc.text(item.name,cx+5,cy-0.5);});y+=Math.ceil(items.length/cols)*6+4;});
   hr();
-
-  // スポット
   sec('Spots');
-  if(!spots.length){ bln('No spots registered.'); }
-  else {
-    spots.forEach(sp=>{
-      chk(16);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(3,41,61);
-      doc.text(sp.name||'(Unnamed)', M+4, y);
-      if(sp.type){ doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(43,188,212); doc.text(sp.type,W-M-2,y,{align:'right'}); }
-      y+=5.5;
-      if(sp.address){ doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,100,120); doc.text(sp.address,M+6,y); y+=5; }
-      if(sp.memo){ bln(sp.memo,4); }
-      y+=2;
-    });
-  }
-
-  const pc = doc.internal.getNumberOfPages();
-  for(let i=1;i<=pc;i++){
-    doc.setPage(i);
-    doc.setDrawColor(43,188,212); doc.setLineWidth(0.5); doc.line(M,H-12,W-M,H-12);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(3,41,61);
-    doc.text('旅のてびき', M, H-7); doc.text(`${i} / ${pc}`, W-M, H-7, {align:'right'});
-  }
-
+  if(!spots.length){bln('No spots registered.');}
+  else{spots.forEach(sp=>{chk(16);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(26,74,96);doc.text(sp.name||'(Unnamed)',M+4,y);if(sp.type){doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(91,191,224);doc.text(sp.type,W-M-2,y,{align:'right'});}y+=5.5;if(sp.address){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60,120,150);doc.text(sp.address,M+6,y);y+=5;}if(sp.memo){bln(sp.memo,4);}y+=2;});}
+  const pc=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pc;i++){doc.setPage(i);doc.setDrawColor(91,191,224);doc.setLineWidth(0.5);doc.line(M,H-12,W-M,H-12);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(26,74,96);doc.text('旅のてびき',M,H-7);doc.text(`${i} / ${pc}`,W-M,H-7,{align:'right'});}
   doc.save(`travel_${dest||'plan'}.pdf`);
 }
 
-// ===== INIT =====
-renderDaySelector();
-renderPacks();
-renderSpots();
+// === INIT ===
+renderDays(); renderPack(); renderSpots();
 </script>
 </body>
 </html>
