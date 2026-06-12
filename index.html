@@ -31,6 +31,12 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Pull to Refresh を無効化 */
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ① 背景が切れないよう html/body 両方に固定背景 */
 html {
   min-height: 100%;
@@ -1430,6 +1436,14 @@ window.showScreen = function showScreen(name) {
   const el = document.getElementById('screen-' + name);
   if (el) { el.style.display = 'block'; el.classList.add('active'); }
   if (name === 'app') requestAnimationFrame(adjustScrollPadding);
+  // login以外の画面は状態を保存
+  if (name !== 'login') {
+    localStorage.setItem('lastScreen', name);
+    localStorage.setItem('lastGroupId',   _currentGroupId   || '');
+    localStorage.setItem('lastGroupName', _currentGroupName || '');
+    localStorage.setItem('lastTripId',    _currentTripId    || '');
+    localStorage.setItem('lastTripName',  _currentTripName  || '');
+  }
 };
 
 // ============================================================
@@ -1499,6 +1513,11 @@ async function registerEmail() {
 }
 
 async function doSignOut() {
+  localStorage.removeItem('lastScreen');
+  localStorage.removeItem('lastGroupId');
+  localStorage.removeItem('lastGroupName');
+  localStorage.removeItem('lastTripId');
+  localStorage.removeItem('lastTripName');
   await _auth.signOut();
 }
 
