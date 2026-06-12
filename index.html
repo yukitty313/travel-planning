@@ -1568,7 +1568,7 @@ window.loadGroups = async function loadGroups() {
   const createSection = document.getElementById('create-group-section');
   if (createSection) createSection.style.display = isAdmin ? 'block' : 'none';
 
-  const snap = await _db.collection('groups').where('members', 'array-contains', uid).get();
+  const snap = await _db.collection('groups').where('members', 'array-contains', uid).get({ source: 'server' });
   const list = document.getElementById('group-list');
   if (snap.empty) {
     list.innerHTML = '<div class="empty"><div class="ico">👥</div>グループがありません<br>招待コードで参加してください</div>';
@@ -1647,7 +1647,7 @@ async function loadTrips() {
   const list = document.getElementById('trip-list');
   list.innerHTML = '<div class="empty" style="padding:20px;opacity:0.7;">読み込み中...</div>';
   try {
-    const snap = await _db.collection('trips').where('groupId', '==', _currentGroupId).get();
+    const snap = await _db.collection('trips').where('groupId', '==', _currentGroupId).get({ source: 'server' });
     if (snap.empty) {
       list.innerHTML = '<div class="empty"><div class="ico">✈️</div>旅行がありません<br>新しい旅行を作成してください</div>';
       return;
@@ -1848,21 +1848,20 @@ async function reloadCurrentScreen() {
     await loadTrips();
 
   } else if (id === 'screen-app') {
-    // 旅行詳細：スケジュール・スポット・持ち物を再取得
+    // 旅行詳細：キャッシュを無視してサーバーから強制取得
     if (!_currentTripId) return;
-    const tripSnap = await _db.collection('trips').doc(_currentTripId).get();
+    const tripSnap = await _db.collection('trips').doc(_currentTripId).get({ source: 'server' });
     if (!tripSnap.exists) return;
     const data = tripSnap.data();
     schedData = data.scheduleData || {};
     spots     = data.spots        || [];
 
-    // 持ち物はサブコレクションから再取得
+    // 持ち物もサーバーから強制取得
     if (_currentTripPackingRef) {
-      const packSnap = await _currentTripPackingRef.get();
+      const packSnap = await _currentTripPackingRef.get({ source: 'server' });
       packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
     }
 
-    // 表示を更新
     renderDays();
     renderPack();
     renderSpots();
