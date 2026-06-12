@@ -101,57 +101,50 @@ body {
 
 /* ② 概要バー（タイトル直下） */
 .overview-bar {
-  margin: 6px 14px 0;
+  margin: 5px 14px 0;
   background: rgba(255,255,255,0.45);
   border: 1.5px solid rgba(255,255,255,0.78);
   border-radius: 14px;
   padding: 8px 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
 }
 .overview-bar:active { background: rgba(255,255,255,0.62); }
 
-.ov-left { min-width: 0; }
 .ov-dest {
   font-family: 'Nunito', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: var(--deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 48%;
 }
-.ov-dates {
-  font-size: 0.68rem;
-  color: var(--textsub);
-  margin-top: 1px;
-}
-.ov-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+.ov-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(30,120,170,0.25);
   flex-shrink: 0;
 }
-.ov-members, .ov-hotel {
-  font-size: 0.68rem;
+.ov-dates {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--textsub);
   white-space: nowrap;
-  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
 }
-.ov-edit {
-  font-size: 0.65rem;
-  color: var(--sea1);
-  font-family: 'Nunito', sans-serif;
-  font-weight: 700;
-}
+/* 旧クラスは不要になったが念のため残す */
+.ov-left, .ov-right, .ov-members, .ov-hotel, .ov-edit { display: none; }
 
 .btn-pdf {
   background: linear-gradient(135deg, var(--sea1), var(--sea2));
@@ -185,7 +178,7 @@ body {
   justify-content: center;
   gap: 5px;
   padding: 8px 4px;
-  border: 1.5px solid rgba(255,255,255,0.45);
+  border: 1.5px solid rgba(255,255,255,0.38);
   border-radius: 50px;
   font-family: 'Nunito', sans-serif;
   font-size: 0.78rem;
@@ -193,14 +186,14 @@ body {
   cursor: pointer;
   transition: all 0.18s;
   -webkit-tap-highlight-color: transparent;
-  background: rgba(255,255,255,0.2);
-  color: var(--text);
+  background: rgba(255,255,255,0.15);
+  color: rgba(180,230,248,0.9);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   white-space: nowrap;
 }
 .tab-btn.active {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.72);
   border-color: rgba(255,255,255,0.9);
   color: var(--deep);
   box-shadow: 0 3px 14px rgba(30,120,170,0.18);
@@ -604,17 +597,11 @@ input[type="time"].sched-time {
     <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
 
-  <!-- ② 概要バー（タイトル直下） -->
+  <!-- 概要バー（タイトル直下）: 目的地 | 日付 横並び -->
   <div class="overview-bar" onclick="openModal()">
-    <div class="ov-left">
-      <div class="ov-dest" id="ov-dest">目的地を設定する ✏️</div>
-      <div class="ov-dates" id="ov-dates"></div>
-    </div>
-    <div class="ov-right">
-      <div class="ov-members" id="ov-members"></div>
-      <div class="ov-hotel" id="ov-hotel"></div>
-      <div class="ov-edit">タップして編集</div>
-    </div>
+    <div class="ov-dest" id="ov-dest">目的地を設定する</div>
+    <div class="ov-divider" id="ov-divider" style="display:none"></div>
+    <div class="ov-dates" id="ov-dates"></div>
   </div>
 
   <!-- ⑤ タブ：ガラス調 -->
@@ -742,25 +729,23 @@ function closeOut(e){ if(e.target===document.getElementById('modal')) closeModal
 
 // === HEADER / OVERVIEW BAR ===
 function updateHdr(){
-  const dest  = document.getElementById('dest').value;
-  const s     = document.getElementById('start-date').value;
-  const e     = document.getElementById('end-date').value;
-  const mem   = document.getElementById('members').value;
-  const hotel = document.getElementById('hotel').value;
+  const dest = document.getElementById('dest').value;
+  const s    = document.getElementById('start-date').value;
+  const e    = document.getElementById('end-date').value;
 
-  document.getElementById('ov-dest').textContent = (dest || '目的地を設定する') + ' ✏️';
+  document.getElementById('ov-dest').textContent = dest || '目的地を設定する';
 
+  const divider = document.getElementById('ov-divider');
   if(s && e){
     const sd=new Date(s), ed=new Date(e), d=Math.ceil((ed-sd)/86400000)+1;
     document.getElementById('ov-dates').textContent =
       `${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
+    divider.style.display = 'block';
   } else {
     document.getElementById('ov-dates').textContent = '';
+    divider.style.display = 'none';
   }
-  document.getElementById('ov-members').textContent = mem  ? `👤 ${mem}`   : '';
-  document.getElementById('ov-hotel').textContent   = hotel ? `🏨 ${hotel}` : '';
 
-  // 概要が増えたぶんヘッダー高が変わるので再調整
   adjustScrollPadding();
 }
 
@@ -783,6 +768,19 @@ function renderDays(){
     sel.appendChild(c);
   }
   renderSched();
+}
+
+// URL を <a> タグに変換するユーティリティ
+function linkify(text) {
+  if (!text) return '';
+  // HTML エスケープ
+  const escaped = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // URL を検出してリンク化
+  return escaped.replace(
+    /(https?:\/\/[^\s　、。，．「」<>"]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:var(--sea2);text-decoration:underline;word-break:break-all;">$1</a>'
+  );
 }
 
 // 編集モード状態
@@ -869,12 +867,13 @@ function renderSched(){
     } else {
       // ── 閲覧モード ──
       const timeLabel = item.time || '──:──';
-      const contentLabel = item.content || '（予定なし）';
+      const contentHtml = item.content ? linkify(item.content) : '<span style="color:rgba(30,100,140,0.35)">（予定なし）</span>';
+      const memoHtml = item.memo ? linkify(item.memo) : '';
       d.innerHTML = `
         <span class="sched-time-view">${timeLabel}</span>
-        <div class="sched-content-view">${contentLabel}</div>
+        <div class="sched-content-view">${contentHtml}</div>
         <div></div>
-        ${item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : ''}
+        ${memoHtml ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${memoHtml}</div></div>` : ''}
       `;
     }
     list.appendChild(d);
