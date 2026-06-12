@@ -1433,7 +1433,7 @@ async function exportPDF(){
 // ============================================================
 // 画面管理（window経由でmoduleスクリプトからも呼べるよう公開）
 // ============================================================
-window.showScreen = function showScreen(name) {
+window.showScreen = function showScreen(name, pushHistory = true) {
   document.querySelectorAll('.screen').forEach(s => {
     s.style.display = 'none';
     s.classList.remove('active');
@@ -1441,13 +1441,31 @@ window.showScreen = function showScreen(name) {
   const el = document.getElementById('screen-' + name);
   if (el) { el.style.display = 'block'; el.classList.add('active'); }
   if (name === 'app') requestAnimationFrame(adjustScrollPadding);
+
   // login以外の画面は状態を保存
   if (name !== 'login') {
-    localStorage.setItem('lastScreen', name);
+    localStorage.setItem('lastScreen',    name);
     localStorage.setItem('lastGroupId',   _currentGroupId   || '');
     localStorage.setItem('lastGroupName', _currentGroupName || '');
     localStorage.setItem('lastTripId',    _currentTripId    || '');
     localStorage.setItem('lastTripName',  _currentTripName  || '');
+  }
+
+  // ブラウザ履歴に積む（popstateから呼ばれた時は積まない）
+  if (pushHistory) {
+    const state = {
+      screen:    name,
+      groupId:   _currentGroupId   || '',
+      groupName: _currentGroupName || '',
+      tripId:    _currentTripId    || '',
+      tripName:  _currentTripName  || '',
+    };
+    // login は履歴に積まない
+    if (name !== 'login') {
+      history.pushState(state, '', '#' + name);
+    } else {
+      history.replaceState(state, '', location.pathname);
+    }
   }
 };
 
@@ -1523,6 +1541,8 @@ async function doSignOut() {
   localStorage.removeItem('lastGroupName');
   localStorage.removeItem('lastTripId');
   localStorage.removeItem('lastTripName');
+  // ブラウザ履歴もリセット
+  history.replaceState(null, '', location.pathname);
   await _auth.signOut();
 }
 
@@ -1852,6 +1872,79 @@ function backToTrips() {
   window.showScreen('trips');
   loadTrips();
 }
+
+// ============================================================
+// ブラウザの戻る/進むボタン対応
+// ============================================================
+window.addEventListener('popstate', async e => {
+  const state = e.state;
+  if (!state || !state.screen) {
+    // stateがない = 最初のページ → ログイン or グループへ
+    if (window._currentUser) {
+      window.showScreen('group', false);
+      loadGroups();
+    } else {
+      window.showScreen('login', false);
+    }
+    return;
+  }
+
+  const { screen, groupId, groupName, tripId, tripName } = state;
+
+  if (screen === 'group') {
+    window.showScreen('group', false);
+    loadGroups();
+
+  } else if (screen === 'trips' && groupId) {
+    _currentGroupId   = groupId;
+    _currentGroupName = groupName;
+    document.getElementById('trips-group-name').textContent = groupName;
+    window.showScreen('trips', false);
+    loadTrips();
+
+  } else if (screen === 'app' && tripId) {
+    _currentGroupId   = groupId;
+    _currentGroupName = groupName;
+    _currentTripId    = tripId;
+    _currentTripName  = tripName;
+    document.getElementById('trips-group-name').textContent = groupName;
+    // 旅行データを再取得して表示
+    try {
+      const tripSnap = await _db.collection('trips').doc(tripId).get();
+      if (tripSnap.exists) {
+        const data = tripSnap.data();
+        schedData = data.scheduleData || {};
+        spots     = data.spots        || [];
+        document.getElementById('dest').value       = data.dest      || '';
+        document.getElementById('start-date').value = data.startDate || '';
+        document.getElementById('end-date').value   = data.endDate   || '';
+        document.getElementById('members').value    = data.members   || '';
+        document.getElementById('hotel').value      = data.hotel     || '';
+        document.getElementById('trip-memo').value  = data.tripMemo  || '';
+        updateHdr(); syncDays();
+        const uid = window._currentUser.uid;
+        const userSnap = await _db.collection('users').doc(uid).get();
+        _myFamilyName = userSnap.exists ? (userSnap.data().familyName || '') : '';
+        _currentTripPackingRef = _db
+          .collection('trips').doc(tripId)
+          .collection('packing').doc(_myFamilyName || uid);
+        const packSnap = await _currentTripPackingRef.get();
+        packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
+        window.showScreen('app', false);
+        renderDays(); renderPack(); renderSpots();
+        const famLabel = document.getElementById('family-label');
+        if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
+      } else {
+        window.showScreen('trips', false);
+        loadTrips();
+      }
+    } catch(e) {
+      console.error('popstate restore error:', e);
+      window.showScreen('trips', false);
+      loadTrips();
+    }
+  }
+});
 
 // === INIT ===
 // 初期表示はlogin
