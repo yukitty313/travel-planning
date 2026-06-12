@@ -1273,6 +1273,13 @@ function linkify(text) {
   );
 }
 
+// 入力debounce（連続入力の最後だけFirestoreに保存）
+let _saveTripTimer = null;
+function saveTripDebounced() {
+  clearTimeout(_saveTripTimer);
+  _saveTripTimer = setTimeout(() => saveTrip(), 1500);
+}
+
 // 編集モード状態
 let schedEditMode = false;
 
@@ -1289,6 +1296,8 @@ function toggleEditMode() {
     btn.textContent = '✏️ 編集';
     btn.style.background = 'rgba(46,163,204,0.18)';
     btn.style.borderColor = 'rgba(46,163,204,0.45)';
+    // 編集完了時にFirestoreへ保存
+    saveTrip();
   }
   renderSched();
 }
@@ -1298,7 +1307,7 @@ function addSched(){
   if(!schedData[curDay]) schedData[curDay]=[];
   schedData[curDay].push({time:'',content:'',memo:'',memoOpen:false});
   renderSched();
-  // 追加後、最後のitemsにフォーカス
+  saveTrip();
   setTimeout(()=>{
     const tas = document.querySelectorAll('.sched-ta');
     if(tas.length) tas[tas.length-1].focus();
@@ -1342,16 +1351,16 @@ function renderSched(){
       // ── 編集モード ──
       d.innerHTML = `
         <input class="l-inp sched-time" type="time" value="${item.time||''}"
-          oninput="schedData[${curDay}][${idx}].time=this.value">
+          oninput="schedData[${curDay}][${idx}].time=this.value;saveTripDebounced()">
         <textarea class="l-inp sched-ta" placeholder="予定を入力"
-          oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this)">${item.content||''}</textarea>
+          oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this);saveTripDebounced()">${item.content||''}</textarea>
         <div class="sched-btns">
           <button class="btn-del" onclick="delSched(${idx})" title="削除">×</button>
           <button class="btn-memo" onclick="toggleMemo(${curDay},${idx})" title="メモ">📝</button>
         </div>
         ${item.memoOpen ? `<div class="sched-memo-wrap">
           <textarea class="sched-memo-ta" placeholder="備考・メモを入力"
-            oninput="schedData[${curDay}][${idx}].memo=this.value;autoResize(this)">${item.memo||''}</textarea>
+            oninput="schedData[${curDay}][${idx}].memo=this.value;autoResize(this);saveTripDebounced()">${item.memo||''}</textarea>
         </div>` : (item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : '')}
       `;
     } else {
@@ -1432,10 +1441,10 @@ function renderSpots(){
     const acc=SPOT_ACCENTS[idx%SPOT_ACCENTS.length];
     const tags=SPOT_TYPES.map(t=>`<span class="spot-type-tag${sp.type===t?' active':''}" onclick="setType(${idx},'${t}',this)">${t}</span>`).join('');
     d.innerHTML=`<div class="spot-accent" style="background:${acc}"></div>
-<input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}" oninput="spots[${idx}].name=this.value">
-<input class="l-inp spot-addr-inp" type="text" placeholder="住所・アクセス" value="${sp.address}" oninput="spots[${idx}].address=this.value">
+<input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}" oninput="spots[${idx}].name=this.value;saveTripDebounced()">
+<input class="l-inp spot-addr-inp" type="text" placeholder="住所・アクセス" value="${sp.address}" oninput="spots[${idx}].address=this.value;saveTripDebounced()">
 <div class="spot-types">${tags}</div>
-<textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）" oninput="spots[${idx}].memo=this.value">${sp.memo}</textarea>
+<textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）" oninput="spots[${idx}].memo=this.value;saveTripDebounced()">${sp.memo}</textarea>
 <div class="spot-foot"><button class="btn-del-text" onclick="delSpot(${idx})">削除</button></div>`;
     list.appendChild(d);
   });
