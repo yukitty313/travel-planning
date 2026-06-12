@@ -962,17 +962,18 @@ input[type="time"].sched-time {
 <!-- HEADER -->
 <header class="hdr" id="hdr">
   <div class="hdr-top">
-    <button class="btn-back" onclick="backToTrips()" style="font-size:0.75rem;padding:5px 12px;">← 旅行一覧</button>
+    <button class="btn-back" onclick="backToTrips()" style="font-size:0.68rem;padding:5px 10px;">← 旅行一覧</button>
     <div class="logo" style="font-size:1rem;">✈ TRAVEL <em>Planning</em></div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <button class="btn-reload" id="reload-app" onclick="reloadCurrentScreen()" title="更新" style="background:rgba(255,255,255,0.3);border-color:rgba(30,120,170,0.25);color:var(--deep);">↻</button>
-      <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
-    </div>
+    <button class="btn-pdf" onclick="exportPDF()">📄 PDF</button>
   </div>
-  <div class="overview-bar" onclick="openModal()">
+  <div class="overview-bar" onclick="openModal()" style="padding-right:8px;">
     <div class="ov-dest" id="ov-dest">目的地を設定する</div>
     <div class="ov-divider" id="ov-divider" style="display:none"></div>
-    <div class="ov-dates" id="ov-dates"></div>
+    <div class="ov-dates" id="ov-dates" style="flex:1;"></div>
+    <button class="btn-reload" id="reload-app"
+      onclick="event.stopPropagation();reloadCurrentScreen()"
+      title="更新"
+      style="background:rgba(255,255,255,0.35);border-color:rgba(30,120,170,0.2);color:var(--deep);width:30px;height:30px;font-size:0.9rem;flex-shrink:0;">↻</button>
   </div>
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="schedule" onclick="showTab('schedule',this)">
@@ -1861,5 +1862,16 @@ initFirebase();
 requestAnimationFrame(adjustScrollPadding);
 </script>
 </div><!-- /screen-app -->
+<!-- 名前変更モーダル -->
+<div class="rename-overlay" id="rename-overlay">
+  <div class="rename-sheet">
+    <div class="rename-title">✏️ 旅行名を変更</div>
+    <input class="f-inp" type="text" id="rename-input" placeholder="新しい旅行名" onkeydown="if(event.key==='Enter')submitRename()">
+    <div class="rename-btns">
+      <button class="btn-rename-cancel" onclick="closeRenameModal()">キャンセル</button>
+      <button class="btn-rename-ok" onclick="submitRename()">変更する</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
