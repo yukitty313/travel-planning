@@ -1198,7 +1198,7 @@ const SPOT_ACCENTS=[
   'linear-gradient(90deg,#74c8e8,#2ea3cc)',
   'linear-gradient(90deg,#aae8f8,#5bbfe0)',
 ];
-const SPOT_TYPES=['観光','グルメ','ショッピング','宿泊','その他'];
+const SPOT_TYPES=[]; // 種別タグ廃止
 
 // ⑥ ヘッダー高さを動的に取得してscroll-areaのpadding-topを調整
 function adjustScrollPadding() {
@@ -1432,7 +1432,47 @@ function addPack(){
 }
 
 // === SPOTS ===
-function addSpot(){ spots.push({name:'',address:'',memo:'',type:''}); renderSpots(); saveTrip(); }
+let spotEditMode = {}; // {idx: true/false} で編集状態管理
+
+function addSpot(){
+  spots.push({name:'',address:'',memo:''});
+  spotEditMode[spots.length-1] = true; // 追加時は即編集モード
+  renderSpots();
+  saveTrip();
+}
+
+function toggleSpotEdit(idx) {
+  spotEditMode[idx] = !spotEditMode[idx];
+  renderSpots();
+  if (!spotEditMode[idx]) saveTrip(); // 編集完了時に保存
+}
+
+function copyAddress(idx) {
+  const addr = spots[idx].address;
+  if (!addr) { alert('住所が入力されていません'); return; }
+  navigator.clipboard.writeText(addr).then(() => {
+    // コピー完了フィードバック
+    const btn = document.querySelector(`[data-copy-idx="${idx}"]`);
+    if (btn) {
+      btn.textContent = '✅ コピー済';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 住所をコピー';
+        btn.classList.remove('copied');
+      }, 2000);
+    }
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = addr;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('住所をコピーしました');
+  });
+}
+
 function renderSpots(){
   const list=document.getElementById('spots-list');
   if(!spots.length){ list.innerHTML='<div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>'; return; }
@@ -1440,22 +1480,58 @@ function renderSpots(){
   spots.forEach((sp,idx)=>{
     const d=document.createElement('div'); d.className='spot-card';
     const acc=SPOT_ACCENTS[idx%SPOT_ACCENTS.length];
-    const tags=SPOT_TYPES.map(t=>`<span class="spot-type-tag${sp.type===t?' active':''}" onclick="setType(${idx},'${t}',this)">${t}</span>`).join('');
-    d.innerHTML=`<div class="spot-accent" style="background:${acc}"></div>
-<input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}" oninput="spots[${idx}].name=this.value;saveTripDebounced()">
-<input class="l-inp spot-addr-inp" type="text" placeholder="住所・アクセス" value="${sp.address}" oninput="spots[${idx}].address=this.value;saveTripDebounced()">
-<div class="spot-types">${tags}</div>
-<textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）" oninput="spots[${idx}].memo=this.value;saveTripDebounced()">${sp.memo}</textarea>
-<div class="spot-foot"><button class="btn-del-text" onclick="delSpot(${idx})">削除</button></div>`;
+    const isEdit = spotEditMode[idx] === true;
+
+    if (isEdit) {
+      // ── 編集モード ──
+      d.innerHTML=`
+        <div class="spot-accent" style="background:${acc}"></div>
+        <input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}"
+          oninput="spots[${idx}].name=this.value;saveTripDebounced()">
+        <input class="l-inp spot-addr-inp" type="text" placeholder="住所（マップアプリ用）" value="${sp.address}"
+          oninput="spots[${idx}].address=this.value;saveTripDebounced()">
+        <textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）"
+          oninput="spots[${idx}].memo=this.value;saveTripDebounced()">${sp.memo}</textarea>
+        <div class="spot-foot">
+          <button class="btn-del-text" onclick="delSpot(${idx})">削除</button>
+          <button class="btn-del-text" onclick="toggleSpotEdit(${idx})"
+            style="background:rgba(46,163,204,0.15);border-color:rgba(46,163,204,0.35);color:var(--deep);">✅ 完了</button>
+        </div>`;
+    } else {
+      // ── 閲覧モード ──
+      const nameHtml  = sp.name    || '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
+      const addrHtml  = sp.address || '<span style="color:rgba(30,100,140,0.35)">住所未入力</span>';
+      const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${sp.memo}</div>` : '';
+      d.innerHTML=`
+        <div class="spot-accent" style="background:${acc}"></div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);padding:4px 2px 2px;">${nameHtml}</div>
+        <div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${addrHtml}</div>
+        ${memoHtml}
+        <div class="spot-foot">
+          <button class="btn-copy-addr" data-copy-idx="${idx}" onclick="copyAddress(${idx})">📋 住所をコピー</button>
+          <div class="spot-foot-right">
+            <button class="btn-del-text" onclick="toggleSpotEdit(${idx})">✏️ 編集</button>
+            <button class="btn-del-text" onclick="delSpot(${idx})">削除</button>
+          </div>
+        </div>`;
+    }
     list.appendChild(d);
   });
 }
-function setType(idx,type,el){
-  spots[idx].type=type;
-  el.closest('.spot-types').querySelectorAll('.spot-type-tag').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+
+function delSpot(idx){
+  if(!confirm('このスポットを削除しますか？')) return;
+  spots.splice(idx,1);
+  // spotEditModeのインデックスを再構築
+  const newMode = {};
+  Object.keys(spotEditMode).forEach(k => {
+    const ki = parseInt(k);
+    if (ki < idx) newMode[ki] = spotEditMode[ki];
+    else if (ki > idx) newMode[ki-1] = spotEditMode[ki];
+  });
+  spotEditMode = newMode;
+  renderSpots(); saveTrip();
 }
-function delSpot(idx){ spots.splice(idx,1); renderSpots(); saveTrip(); }
 
 // === TABS ===
 function showTab(name,btn){
