@@ -31,11 +31,7 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Pull to Refresh を無効化 */
-html, body {
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-}
+
 
 /* ① 背景が切れないよう html/body 両方に固定背景 */
 html {
@@ -1642,15 +1638,32 @@ async function loadTrips() {
       div.className = 'trip-item';
       const date = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('ja-JP') : '';
       const dest = d.dest ? ` · ${d.dest}` : '';
-      div.innerHTML = `
-        <div style="flex:1;min-width:0;">
-          <div class="trip-item-name">${d.name}</div>
-          <div class="trip-item-date">${date}${dest}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <button class="btn-trip-edit" onclick="event.stopPropagation();openRenameModal('${d.id}','${d.name.replace(/'/g,"\'")}')">✏️</button>
-          <div class="trip-item-arrow">›</div>
-        </div>`;
+      // innerHTML内にJSを書くと特殊文字で壊れるのでDOM操作で実装
+      const left = document.createElement('div');
+      left.style.cssText = 'flex:1;min-width:0;';
+      left.innerHTML = `
+        <div class="trip-item-name">${d.name}</div>
+        <div class="trip-item-date">${date}${dest}</div>`;
+
+      const right = document.createElement('div');
+      right.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0;';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-trip-edit';
+      editBtn.textContent = '✏️';
+      editBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openRenameModal(d.id, d.name);
+      });
+
+      const arrow = document.createElement('div');
+      arrow.className = 'trip-item-arrow';
+      arrow.textContent = '›';
+
+      right.appendChild(editBtn);
+      right.appendChild(arrow);
+      div.appendChild(left);
+      div.appendChild(right);
 
       div.onclick = () => openTrip(d.id, d);
       list.appendChild(div);
