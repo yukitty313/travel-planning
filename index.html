@@ -1109,10 +1109,76 @@ function initFirebase() {
       } else if (user.displayName && userSnap.data().displayName !== user.displayName) {
         await userRef.update({ displayName: user.displayName });
       }
-      showScreen('group');
-      loadGroups();
+
+      // localStorageから前回の画面を復元
+      const lastScreen    = localStorage.getItem('lastScreen')    || 'group';
+      const lastGroupId   = localStorage.getItem('lastGroupId')   || '';
+      const lastGroupName = localStorage.getItem('lastGroupName') || '';
+      const lastTripId    = localStorage.getItem('lastTripId')    || '';
+      const lastTripName  = localStorage.getItem('lastTripName')  || '';
+
+      if (lastScreen === 'app' && lastTripId && lastGroupId) {
+        // 旅行詳細画面を復元
+        _currentGroupId   = lastGroupId;
+        _currentGroupName = lastGroupName;
+        _currentTripId    = lastTripId;
+        _currentTripName  = lastTripName;
+        document.getElementById('trips-group-name').textContent = lastGroupName;
+        try {
+          const tripSnap = await _db.collection('trips').doc(lastTripId).get();
+          if (tripSnap.exists) {
+            const data = tripSnap.data();
+            schedData = data.scheduleData || {};
+            spots     = data.spots        || [];
+            document.getElementById('dest').value       = data.dest      || '';
+            document.getElementById('start-date').value = data.startDate || '';
+            document.getElementById('end-date').value   = data.endDate   || '';
+            document.getElementById('members').value    = data.members   || '';
+            document.getElementById('hotel').value      = data.hotel     || '';
+            document.getElementById('trip-memo').value  = data.tripMemo  || '';
+            updateHdr(); syncDays();
+            // 持ち物サブコレクション
+            const uid = user.uid;
+            const uSnap = await _db.collection('users').doc(uid).get();
+            _myFamilyName = uSnap.exists ? (uSnap.data().familyName || '') : '';
+            _currentTripPackingRef = _db
+              .collection('trips').doc(lastTripId)
+              .collection('packing').doc(_myFamilyName || uid);
+            const packSnap = await _currentTripPackingRef.get();
+            packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
+            showScreen('app');
+            renderDays(); renderPack(); renderSpots();
+            const famLabel = document.getElementById('family-label');
+            if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
+          } else {
+            showScreen('group'); loadGroups();
+          }
+        } catch(e) {
+          console.error('restore error:', e);
+          showScreen('group'); loadGroups();
+        }
+
+      } else if (lastScreen === 'trips' && lastGroupId) {
+        // 旅行一覧画面を復元
+        _currentGroupId   = lastGroupId;
+        _currentGroupName = lastGroupName;
+        document.getElementById('trips-group-name').textContent = lastGroupName;
+        showScreen('trips');
+        loadTrips();
+
+      } else {
+        // グループ選択画面
+        showScreen('group');
+        loadGroups();
+      }
+
     } else {
       window._currentUser = null;
+      localStorage.removeItem('lastScreen');
+      localStorage.removeItem('lastGroupId');
+      localStorage.removeItem('lastGroupName');
+      localStorage.removeItem('lastTripId');
+      localStorage.removeItem('lastTripName');
       showScreen('login');
     }
   });
