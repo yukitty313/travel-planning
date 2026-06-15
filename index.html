@@ -220,12 +220,12 @@ body {
   white-space: nowrap;
 }
 .tab-btn.active {
-  background: rgba(20,80,120,0.55);
+  background: rgba(59,172,210,0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-color: rgba(255,255,255,0.3);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(10,60,100,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 2px 12px rgba(59,172,210,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .tab-btn .t-ico { font-size: 1.1rem; line-height: 1; }
 
@@ -388,12 +388,12 @@ body {
   min-height: 38px; display: flex; align-items: center;
 }
 .day-chip.active {
-  background: rgba(20,80,120,0.55);
+  background: rgba(59,172,210,0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-color: rgba(255,255,255,0.3);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(10,60,100,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 2px 12px rgba(59,172,210,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
 /* スケジュール行 */
@@ -565,12 +565,12 @@ input[type="time"].sched-time {
   min-height: 36px; display: flex; align-items: center;
 }
 .cat-chip.active {
-  background: rgba(20,80,120,0.55);
+  background: rgba(59,172,210,0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-color: rgba(255,255,255,0.3);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(10,60,100,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 2px 12px rgba(59,172,210,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .pack-badge {
   font-family: 'Nunito', sans-serif;
@@ -1441,16 +1441,16 @@ function renderSched(){
           oninput="schedData[${curDay}][${idx}].time=this.value;saveTripDebounced()">
         <textarea class="l-inp sched-ta" placeholder="予定を入力"
           oninput="schedData[${curDay}][${idx}].content=this.value;autoResize(this);saveTripDebounced()">${item.content||''}</textarea>
+        ${item.memoOpen ? `<div class="sched-memo-wrap">
+          <textarea class="sched-memo-ta" placeholder="備考・メモを入力"
+            oninput="schedData[${curDay}][${idx}].memo=this.value;autoResize(this);saveTripDebounced()">${item.memo||''}</textarea>
+        </div>` : (item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : '')}
         <div class="sched-btns">
           <button class="btn-move" onclick="moveSchedUp(${idx})" ${isFirst?'disabled':''} title="上へ">▲</button>
           <button class="btn-move" onclick="moveSchedDown(${idx})" ${isLast?'disabled':''} title="下へ">▼</button>
           <button class="btn-del" onclick="delSched(${idx})" title="削除">×</button>
           <button class="btn-memo" onclick="toggleMemo(${curDay},${idx})" title="メモ">📝</button>
         </div>
-        ${item.memoOpen ? `<div class="sched-memo-wrap">
-          <textarea class="sched-memo-ta" placeholder="備考・メモを入力"
-            oninput="schedData[${curDay}][${idx}].memo=this.value;autoResize(this);saveTripDebounced()">${item.memo||''}</textarea>
-        </div>` : (item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : '')}
       `;
     } else {
       const timeLabel = item.time || '──:──';
