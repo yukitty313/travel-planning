@@ -409,7 +409,7 @@ body {
 .sched-list { display: flex; flex-direction: column; gap: 9px; }
 
 .sched-item {
-  background: rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.75);
   border-left: 3px solid var(--sea1);
   border-radius: 0 14px 14px 0;
@@ -1950,12 +1950,39 @@ function renderHotels() {
         ${memoHtml}
         <div class="spot-foot">
           <div class="spot-foot-right">
+            ${h.address ? `<button class="btn-copy-addr" data-hotel-copy-idx="${idx}" onclick="copyHotel(${idx})" title="住所をコピー">${COPY_ICON}</button>` : ''}
             <button class="btn-del-text" onclick="toggleHotelEdit(${idx})">✏️ 編集</button>
             <button class="btn-del-text" onclick="delHotel(${idx})">削除</button>
           </div>
         </div>`;
     }
     list.appendChild(d);
+  });
+}
+
+function copyHotel(idx) {
+  const addr = hotelItems[idx].address;
+  if (!addr) { alert('住所が入力されていません'); return; }
+  const btn = document.querySelector(`[data-hotel-copy-idx="${idx}"]`);
+  const doFeedback = () => {
+    if (btn) {
+      btn.innerHTML = CHECK_ICON;
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = COPY_ICON;
+        btn.classList.remove('copied');
+      }, 2000);
+    }
+    showCopyToast();
+  };
+  navigator.clipboard.writeText(addr).then(doFeedback).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = addr;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    doFeedback();
   });
 }
 
