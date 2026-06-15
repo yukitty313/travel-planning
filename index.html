@@ -1663,7 +1663,7 @@ function renderPack(){
           <button class="btn-del" onclick="delPack(${ri})" title="削除">×</button>
         </div>`;
       // 編集欄に自動フォーカス
-      setTimeout(()=>{ const inp=d.querySelector('.pack-edit-inp'); if(inp){ inp.focus(); inp.select(); }}, 30);
+      setTimeout(()=>{ const inp=d.querySelector('.pack-edit-inp'); if(inp){ inp.focus(); const l=inp.value.length; inp.setSelectionRange(l,l); }}, 0);
     } else {
       d.innerHTML = `
         <input class="pack-cb" type="checkbox" ${item.checked?'checked':''}
