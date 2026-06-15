@@ -404,10 +404,10 @@ body {
   border: 1px solid rgba(255,255,255,0.75);
   border-left: 3px solid var(--sea1);
   border-radius: 0 14px 14px 0;
-  padding: 10px 10px 10px 12px;
+  padding: 10px 10px 8px 12px;
   display: grid;
-  grid-template-columns: 62px 1fr auto;
-  gap: 8px;
+  grid-template-columns: 62px 1fr;
+  gap: 6px 8px;
   align-items: start;
   position: relative;
 }
@@ -514,10 +514,15 @@ input[type="time"].sched-time {
 }
 
 .sched-btns {
+  grid-column: 1 / -1;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  flex-direction: row;
+  gap: 7px;
   align-items: center;
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px solid rgba(30,120,170,0.08);
+  margin-top: 2px;
 }
 .btn-memo {
   background: rgba(255,255,255,0.45);
@@ -1454,8 +1459,7 @@ function renderSched(){
       d.innerHTML = `
         <span class="sched-time-view">${timeLabel}</span>
         <div class="sched-content-view">${contentHtml}</div>
-        <div></div>
-        ${memoHtml ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${memoHtml}</div></div>` : ''}
+        ${memoHtml ? `<div class="sched-memo-wrap" style="grid-column:1/-1"><div class="sched-memo-view">${memoHtml}</div></div>` : ''}
       `;
     }
     list.appendChild(d);
