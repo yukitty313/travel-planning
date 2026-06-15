@@ -1435,7 +1435,7 @@ function updateHdr(){
   if(s && e){
     const sd=new Date(s), ed=new Date(e), d=Math.ceil((ed-sd)/86400000)+1;
     document.getElementById('ov-dates').textContent =
-      `${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d}日間）`;
+      `${sd.getMonth()+1}/${sd.getDate()} 〜 ${ed.getMonth()+1}/${ed.getDate()}（${d-1}泊${d}日）`;
     divider.style.display = 'block';
   } else {
     document.getElementById('ov-dates').textContent = '';
