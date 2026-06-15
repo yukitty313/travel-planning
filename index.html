@@ -586,7 +586,22 @@ input[type="time"].sched-time {
 }
 .spot-type-tag.active { background:var(--deep);border-color:var(--deep);color:white; }
 .spot-memo-inp { font-size:0.82rem;resize:none;height:52px;margin-bottom:8px; }
-.spot-foot { display:flex;justify-content:flex-end; }
+.spot-foot { display:flex;justify-content:space-between;align-items:center;margin-top:8px; }
+.spot-foot-right { display:flex;gap:6px;align-items:center; }
+.btn-copy-addr {
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(30,120,170,0.18);
+  border-radius: 50%;
+  width: 34px; height: 34px; min-width: 34px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--textsub);
+  padding: 0;
+}
+.btn-copy-addr:active { background: rgba(91,191,224,0.25); border-color: var(--sea1); }
+.btn-copy-addr.copied { background: rgba(91,191,224,0.2); border-color: rgba(91,191,224,0.5); color: var(--sea2); }
 .btn-del-text {
   background:none;border:1px solid rgba(30,120,170,0.2);
   border-radius:50px;padding:5px 14px;
@@ -1447,27 +1462,31 @@ function toggleSpotEdit(idx) {
   if (!spotEditMode[idx]) saveTrip();
 }
 
+const COPY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const CHECK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
 function copyAddress(idx) {
   const addr = spots[idx].address;
   if (!addr) { alert('住所が入力されていません'); return; }
-  navigator.clipboard.writeText(addr).then(() => {
-    const btn = document.querySelector(`[data-copy-idx="${idx}"]`);
+  const btn = document.querySelector(`[data-copy-idx="${idx}"]`);
+  const doFeedback = () => {
     if (btn) {
-      btn.textContent = '✅ コピー済';
+      btn.innerHTML = CHECK_ICON;
       btn.classList.add('copied');
       setTimeout(() => {
-        btn.textContent = '📋 住所をコピー';
+        btn.innerHTML = COPY_ICON;
         btn.classList.remove('copied');
       }, 2000);
     }
-  }).catch(() => {
+  };
+  navigator.clipboard.writeText(addr).then(doFeedback).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = addr;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    alert('住所をコピーしました');
+    doFeedback();
   });
 }
 
@@ -1497,14 +1516,14 @@ function renderSpots(){
     } else {
       const nameHtml  = sp.name    || '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
       const addrHtml  = sp.address || '<span style="color:rgba(30,100,140,0.35)">住所未入力</span>';
-      const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${sp.memo}</div>` : '';
+      const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${linkify(sp.memo)}</div>` : '';
       d.innerHTML=`
         <div class="spot-accent" style="background:${acc}"></div>
         <div style="font-size:16px;font-weight:600;color:var(--text);padding:4px 2px 2px;">${nameHtml}</div>
         <div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${addrHtml}</div>
         ${memoHtml}
         <div class="spot-foot">
-          <button class="btn-copy-addr" data-copy-idx="${idx}" onclick="copyAddress(${idx})">📋 住所をコピー</button>
+          <button class="btn-copy-addr" data-copy-idx="${idx}" onclick="copyAddress(${idx})" title="住所をコピー">${COPY_ICON}</button>
           <div class="spot-foot-right">
             <button class="btn-del-text" onclick="toggleSpotEdit(${idx})">✏️ 編集</button>
             <button class="btn-del-text" onclick="delSpot(${idx})">削除</button>
