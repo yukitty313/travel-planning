@@ -103,15 +103,16 @@ body {
 
 /* タイトル行 */
 .hdr-top {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 14px 0;
   gap: 8px;
 }
 .hdr-top .logo {
-  grid-column: 2;
-  text-align: center;
+  flex: 1;
+  text-align: left;
+  padding-left: 8px;
 }
 
 .logo {
@@ -608,6 +609,24 @@ input[type="time"].sched-time {
 }
 .add-pack-sel option { background:#e8f8fd;color:var(--text); }
 
+.spot-sub-tab {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1.5px solid rgba(30,120,170,0.22);
+  border-radius: 20px;
+  background: rgba(30,120,170,0.06);
+  color: var(--textsub);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.spot-sub-tab.active {
+  background: rgba(59,172,210,0.75);
+  color: white;
+  border-color: transparent;
+}
 /* ===== 行き先メモ ===== */
 .spots-list { display:flex;flex-direction:column;gap:12px; }
 .spot-card {
@@ -1141,11 +1160,28 @@ input[type="time"].sched-time {
 
   <!-- 行き先メモ -->
   <div class="panel" id="panel-spots">
-    <div class="spots-list" id="spots-list">
-      <div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>
+    <!-- サブタブ -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;">
+      <button class="spot-sub-tab active" id="sub-tab-spot" onclick="switchSpotTab('spot',this)">📍 観光スポット</button>
+      <button class="spot-sub-tab" id="sub-tab-hotel" onclick="switchSpotTab('hotel',this)">🏨 宿泊先情報</button>
     </div>
-    <div class="add-center" style="margin-top:14px;">
-      <button class="btn-add" onclick="addSpot()">＋ スポットを追加</button>
+    <!-- 観光スポット -->
+    <div id="sub-panel-spot">
+      <div class="spots-list" id="spots-list">
+        <div class="empty"><div class="ico">📍</div>行きたい場所を追加しよう</div>
+      </div>
+      <div class="add-center" style="margin-top:14px;">
+        <button class="btn-add" onclick="addSpot()">＋ スポットを追加</button>
+      </div>
+    </div>
+    <!-- 宿泊先情報 -->
+    <div id="sub-panel-hotel" style="display:none;">
+      <div class="spots-list" id="hotels-list">
+        <div class="empty"><div class="ico">🏨</div>宿泊先を追加しよう</div>
+      </div>
+      <div class="add-center" style="margin-top:14px;">
+        <button class="btn-add" onclick="addHotel()">＋ 宿泊先を追加</button>
+      </div>
     </div>
   </div>
 
@@ -1197,7 +1233,6 @@ input[type="time"].sched-time {
           </div>
         </div>
       </div>
-      <div class="modal-field"><label>宿泊先</label><input class="f-inp" type="text" id="hotel" placeholder="例: ○○ホテル" oninput="updateHdr()"></div>
       <div class="modal-field"><label>メモ</label><input class="f-inp" type="text" id="trip-memo" placeholder="例: 夏休み旅行"></div>
     </div>
     <div class="modal-btm"><button class="btn-done" onclick="closeModal()">完了 ✓</button></div>
@@ -1263,11 +1298,12 @@ function initFirebase() {
             const data = tripSnap.data();
             schedData = data.scheduleData || {};
             spots     = data.spots        || [];
+            hotelItems = data.hotelItems   || [];
+            hotelItems = data.hotelItems   || [];
             document.getElementById('dest').value       = data.dest      || '';
             document.getElementById('start-date').value = data.startDate || '';
             document.getElementById('end-date').value   = data.endDate   || '';
             setMembersFromText(data.members || '');
-            document.getElementById('hotel').value      = data.hotel     || '';
             document.getElementById('trip-memo').value  = data.tripMemo  || '';
             updateHdr(); syncDays();
             const uid = user.uid;
@@ -1279,7 +1315,7 @@ function initFirebase() {
             const packSnap = await _currentTripPackingRef.get();
             packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
             showScreen('app');
-            renderDays(); renderPack(); renderSpots();
+            renderDays(); renderPack(); renderSpots(); renderHotels();
             const famLabel = document.getElementById('family-label');
             if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
           } else {
@@ -1316,7 +1352,7 @@ function initFirebase() {
 
 // === STATE ===
 let curDay=1, totalDays=1;
-let schedData={}, packItems=[], spots=[], catFilter='all';
+let schedData={}, packItems=[], spots=[], hotelItems=[], catFilter='all', currentSpotTab='spot';
 let _myFamilyName = '';
 let _currentTripPackingRef = null;
 
@@ -1741,6 +1777,89 @@ function delSpot(idx){
   renderSpots(); saveTrip();
 }
 
+// === サブタブ切替 ===
+function switchSpotTab(tab, btn) {
+  currentSpotTab = tab;
+  document.querySelectorAll('.spot-sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sub-panel-spot').style.display  = tab==='spot'  ? '' : 'none';
+  document.getElementById('sub-panel-hotel').style.display = tab==='hotel' ? '' : 'none';
+}
+
+// === 宿泊先 ===
+let hotelEditMode = {};
+
+function addHotel() {
+  hotelItems.push({name:'', address:'', memo:''});
+  hotelEditMode[hotelItems.length-1] = true;
+  renderHotels();
+}
+
+function toggleHotelEdit(idx) {
+  hotelEditMode[idx] = !hotelEditMode[idx];
+  if (!hotelEditMode[idx]) saveTrip();
+  renderHotels();
+}
+
+function delHotel(idx) {
+  if (!confirm('この宿泊先を削除しますか？')) return;
+  hotelItems.splice(idx, 1);
+  const newMode = {};
+  Object.keys(hotelEditMode).forEach(k => {
+    const ki = parseInt(k);
+    if (ki < idx) newMode[ki] = hotelEditMode[ki];
+    else if (ki > idx) newMode[ki-1] = hotelEditMode[ki];
+  });
+  hotelEditMode = newMode;
+  renderHotels(); saveTrip();
+}
+
+function renderHotels() {
+  const list = document.getElementById('hotels-list');
+  if (!list) return;
+  if (!hotelItems.length) {
+    list.innerHTML = '<div class="empty"><div class="ico">🏨</div>宿泊先を追加しよう</div>';
+    return;
+  }
+  list.innerHTML = '';
+  hotelItems.forEach((h, idx) => {
+    const d = document.createElement('div');
+    d.className = 'spot-card';
+    const isEdit = hotelEditMode[idx] === true;
+    if (isEdit) {
+      d.innerHTML = `
+        <div class="spot-accent" style="background:linear-gradient(90deg,#5bbfe0,#2ea3cc)"></div>
+        <input class="l-inp spot-name-inp" type="text" placeholder="宿泊先名（例: ○○ホテル）" value="${h.name}"
+          oninput="hotelItems[${idx}].name=this.value;saveTripDebounced()">
+        <input class="l-inp spot-addr-inp" type="text" placeholder="住所" value="${h.address}"
+          oninput="hotelItems[${idx}].address=this.value;saveTripDebounced()">
+        <textarea class="l-inp spot-memo-inp" placeholder="メモ（チェックイン時間・連絡先・URL など）"
+          oninput="hotelItems[${idx}].memo=this.value;saveTripDebounced()">${h.memo}</textarea>
+        <div class="spot-foot">
+          <button class="btn-del-text" onclick="delHotel(${idx})">削除</button>
+          <button class="btn-del-text" onclick="toggleHotelEdit(${idx})"
+            style="background:rgba(46,163,204,0.15);border-color:rgba(46,163,204,0.35);color:var(--deep);">✅ 完了</button>
+        </div>`;
+    } else {
+      const nameHtml = h.name || '<span style="color:rgba(30,100,140,0.35)">宿泊先名未入力</span>';
+      const addrHtml = h.address ? `<div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${h.address}</div>` : '';
+      const memoHtml = h.memo ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.6;">${linkify(h.memo)}</div>` : '';
+      d.innerHTML = `
+        <div class="spot-accent" style="background:linear-gradient(90deg,#5bbfe0,#2ea3cc)"></div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);padding:4px 2px 2px;">🏨 ${nameHtml}</div>
+        ${addrHtml}
+        ${memoHtml}
+        <div class="spot-foot">
+          <div class="spot-foot-right">
+            <button class="btn-del-text" onclick="toggleHotelEdit(${idx})">✏️ 編集</button>
+            <button class="btn-del-text" onclick="delHotel(${idx})">削除</button>
+          </div>
+        </div>`;
+    }
+    list.appendChild(d);
+  });
+}
+
 // === TABS ===
 function showTab(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2024,7 +2143,7 @@ async function createTrip() {
   });
   document.getElementById('new-trip-name').value = '';
   _currentTripName = name;
-  openTrip(ref.id, { name, scheduleData:{}, packItems:[], spots:[] });
+  openTrip(ref.id, { name, scheduleData:{}, packItems:[], spots:[], hotelItems:[] });
 }
 
 async function openTrip(tripId, data) {
@@ -2032,6 +2151,8 @@ async function openTrip(tripId, data) {
   _currentTripName = data.name || '';
   schedData  = data.scheduleData || {};
   spots      = data.spots        || [];
+            hotelItems = data.hotelItems   || [];
+  hotelItems  = data.hotelItems   || [];
   totalDays  = 1; curDay = 1;
   schedEditMode = false;
 
@@ -2039,7 +2160,6 @@ async function openTrip(tripId, data) {
   document.getElementById('start-date').value = data.startDate || '';
   document.getElementById('end-date').value   = data.endDate   || '';
   setMembersFromText(data.members || '');
-  document.getElementById('hotel').value      = data.hotel     || '';
   document.getElementById('trip-memo').value  = data.tripMemo  || '';
   updateHdr(); syncDays();
 
@@ -2055,7 +2175,7 @@ async function openTrip(tripId, data) {
   packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
 
   showScreen('app');
-  renderDays(); renderPack(); renderSpots();
+  renderDays(); renderPack(); renderSpots(); renderHotels();
   const famLabel = document.getElementById('family-label');
   if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
 }
@@ -2070,10 +2190,10 @@ async function saveTrip() {
       startDate:    document.getElementById('start-date').value,
       endDate:      document.getElementById('end-date').value,
       members:      getMembersText(),
-      hotel:        document.getElementById('hotel').value,
       tripMemo:     document.getElementById('trip-memo').value,
       scheduleData: schedData,
       spots:        spots,
+      hotelItems:   hotelItems,
       createdBy:    window._currentUser?.uid || '',
       updatedAt:    firebase.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
@@ -2186,11 +2306,11 @@ window.addEventListener('popstate', async e => {
         const data = tripSnap.data();
         schedData = data.scheduleData || {};
         spots     = data.spots        || [];
+            hotelItems = data.hotelItems   || [];
         document.getElementById('dest').value       = data.dest      || '';
         document.getElementById('start-date').value = data.startDate || '';
         document.getElementById('end-date').value   = data.endDate   || '';
         setMembersFromText(data.members || '');
-        document.getElementById('hotel').value      = data.hotel     || '';
         document.getElementById('trip-memo').value  = data.tripMemo  || '';
         updateHdr(); syncDays();
         const uid = window._currentUser.uid;
@@ -2202,7 +2322,7 @@ window.addEventListener('popstate', async e => {
         const packSnap = await _currentTripPackingRef.get();
         packItems = packSnap.exists ? (packSnap.data().items || []) : [...DEF_PACKS];
         window.showScreen('app', false);
-        renderDays(); renderPack(); renderSpots();
+        renderDays(); renderPack(); renderSpots(); renderHotels();
         const famLabel = document.getElementById('family-label');
         if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
       } else {
