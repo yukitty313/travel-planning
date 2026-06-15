@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
 
@@ -590,13 +591,27 @@ input[type="time"].sched-time {
   border-radius: 12px;
   padding: 8px 12px;
   display: flex; align-items: center; gap: 10px;
-  min-height: 38px; transition: background 0.15s;
+  min-height: 44px; transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .pack-item.checked { background: rgba(91,191,224,0.18); border-color: rgba(91,191,224,0.4); }
+.pack-item.sortable-ghost { opacity: 0.35; }
+.pack-item.sortable-drag  { box-shadow: 0 8px 24px rgba(30,120,170,0.22); }
+.pack-handle {
+  color: var(--textsub); font-size: 1rem; cursor: grab; padding: 0 2px;
+  opacity: 0.5; touch-action: none;
+}
+.pack-handle:active { cursor: grabbing; }
 .pack-cb { width:20px;height:20px;min-width:20px;accent-color:var(--sea2);cursor:pointer; }
 .pack-label { flex:1;font-size:0.88rem;color:var(--text);cursor:pointer; }
 .pack-item.checked .pack-label { text-decoration:line-through;color:var(--textsub); }
+.pack-edit-inp {
+  flex:1; font-size:0.88rem; padding:3px 6px; border-radius:6px;
+  border:1.5px solid rgba(46,163,204,0.45); background:rgba(255,255,255,0.8);
+  color:var(--text); outline:none;
+}
+.pack-item-btns { display:flex; gap:4px; align-items:center; }
 .add-pack-row { display:flex;gap:8px; }
 .add-pack-sel {
   background: rgba(255,255,255,0.55);
@@ -1614,24 +1629,103 @@ const DEF_PACKS=[
 ];
 packItems=[...DEF_PACKS];
 
+let packEditMode = {}; // idx -> true
+let _packSortable = null;
+
 function renderPack(){
-  const list=document.getElementById('pack-list');
-  const filtered=catFilter==='all'?packItems:packItems.filter(p=>p.cat===catFilter);
-  const ck=packItems.filter(p=>p.checked).length;
-  document.getElementById('pack-count').textContent=`${ck} / ${packItems.length} 完了`;
-  if(!filtered.length){ list.innerHTML='<div class="empty" style="padding:16px 0"><div class="ico">📦</div>このカテゴリは空です</div>'; return; }
+  const list = document.getElementById('pack-list');
+  const filtered = catFilter==='all' ? packItems : packItems.filter(p=>p.cat===catFilter);
+  const ck = packItems.filter(p=>p.checked).length;
+  document.getElementById('pack-count').textContent = `${ck} / ${packItems.length} 完了`;
+  if(!filtered.length){
+    list.innerHTML='<div class="empty" style="padding:16px 0"><div class="ico">📦</div>このカテゴリは空です</div>';
+    return;
+  }
   list.innerHTML='';
   filtered.forEach(item=>{
-    const ri=packItems.indexOf(item), d=document.createElement('div');
-    d.className='pack-item'+(item.checked?' checked':'');
-    d.innerHTML=`<input class="pack-cb" type="checkbox" ${item.checked?'checked':''} onchange="togglePack(${ri})">
-<span class="pack-label" onclick="togglePack(${ri})">${item.name}</span>
-<button class="btn-del" onclick="delPack(${ri})">×</button>`;
+    const ri = packItems.indexOf(item);
+    const isEdit = packEditMode[ri] === true;
+    const d = document.createElement('div');
+    d.className = 'pack-item' + (item.checked?' checked':'');
+    d.dataset.idx = ri;
+    if(isEdit){
+      d.innerHTML = `
+        <span class="pack-handle">⠿</span>
+        <input class="pack-edit-inp" type="text" value="${item.name.replace(/"/g,'&quot;')}"
+          oninput="packItems[${ri}].name=this.value;saveTripDebounced()"
+          onkeydown="if(event.key==='Enter')finishPackEdit(${ri})">
+        <select class="add-pack-sel" style="font-size:0.78rem;padding:3px 4px;"
+          onchange="packItems[${ri}].cat=this.value;saveTripDebounced()">
+          ${['衣類','洗面','電子機器','その他'].map(cat=>
+            `<option value="${cat}" ${item.cat===cat?'selected':''}>${cat}</option>`
+          ).join('')}
+        </select>
+        <div class="pack-item-btns">
+          <button class="btn-del-text" style="font-size:0.75rem;" onclick="finishPackEdit(${ri})">✅</button>
+        </div>`;
+    } else {
+      d.innerHTML = `
+        <span class="pack-handle">⠿</span>
+        <input class="pack-cb" type="checkbox" ${item.checked?'checked':''}
+          onchange="togglePack(${ri})">
+        <span class="pack-label" onclick="togglePack(${ri})">${item.name}</span>
+        <div class="pack-item-btns">
+          <button class="btn-del-text" style="font-size:0.75rem;" onclick="startPackEdit(${ri})">✏️</button>
+          <button class="btn-del" onclick="delPack(${ri})" title="削除">×</button>
+        </div>`;
+    }
     list.appendChild(d);
   });
+
+  // Sortable 初期化
+  if(_packSortable) _packSortable.destroy();
+  _packSortable = Sortable.create(list, {
+    animation: 150,
+    handle: '.pack-handle',
+    ghostClass: 'sortable-ghost',
+    dragClass: 'sortable-drag',
+    filter: '.pack-edit-inp,.pack-cb,.btn-del,.btn-del-text',
+    preventOnFilter: false,
+    onEnd(evt){
+      // フィルタ適用中かどうかで処理分岐
+      if(catFilter === 'all'){
+        // 全表示: packItems を直接並べ替え
+        const moved = packItems.splice(evt.oldIndex, 1)[0];
+        packItems.splice(evt.newIndex, 0, moved);
+      } else {
+        // カテゴリフィルタ中: filtered配列内の順序を packItems に反映
+        const filtered = packItems.filter(p=>p.cat===catFilter);
+        const movedItem = filtered.splice(evt.oldIndex, 1)[0];
+        filtered.splice(evt.newIndex, 0, movedItem);
+        // packItems から該当カテゴリを除いたベースに filtered を差し込む
+        const base = packItems.filter(p=>p.cat!==catFilter);
+        // 元の挿入位置を保持してマージ（カテゴリ順を維持）
+        let fi = 0;
+        for(let i=0;i<packItems.length;i++){
+          if(packItems[i].cat===catFilter){ packItems[i]=filtered[fi++]; }
+        }
+      }
+      packEditMode = {};
+      renderPack(); savePacking();
+    }
+  });
 }
+
+function startPackEdit(i){ packEditMode[i]=true; renderPack(); }
+function finishPackEdit(i){ packEditMode[i]=false; renderPack(); savePacking(); }
 function togglePack(i){ packItems[i].checked=!packItems[i].checked; renderPack(); savePacking(); }
-function delPack(i){ packItems.splice(i,1); renderPack(); savePacking(); }
+function delPack(i){
+  if(!confirm(`「${packItems[i].name}」を削除しますか？`)) return;
+  packItems.splice(i,1);
+  const newMode={};
+  Object.keys(packEditMode).forEach(k=>{
+    const ki=parseInt(k);
+    if(ki<i) newMode[ki]=packEditMode[ki];
+    else if(ki>i) newMode[ki-1]=packEditMode[ki];
+  });
+  packEditMode=newMode;
+  renderPack(); savePacking();
+}
 function filterCat(cat,el){
   catFilter=cat;
   document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('active'));
@@ -1765,7 +1859,7 @@ function moveSpotDown(idx) {
 }
 
 function delSpot(idx){
-  if(!confirm('このスポットを削除しますか？')) return;
+  if(!confirm(`「${spots[idx].name||'このスポット'}」を削除しますか？`)) return;
   spots.splice(idx,1);
   const newMode = {};
   Object.keys(spotEditMode).forEach(k => {
@@ -1802,7 +1896,7 @@ function toggleHotelEdit(idx) {
 }
 
 function delHotel(idx) {
-  if (!confirm('この宿泊先を削除しますか？')) return;
+  if (!confirm(`「${hotelItems[idx].name||'この宿泊先'}」を削除しますか？`)) return;
   hotelItems.splice(idx, 1);
   const newMode = {};
   Object.keys(hotelEditMode).forEach(k => {
