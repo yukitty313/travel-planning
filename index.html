@@ -103,11 +103,15 @@ body {
 
 /* タイトル行 */
 .hdr-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 14px 0;
   gap: 8px;
+}
+.hdr-top .logo {
+  grid-column: 2;
+  text-align: center;
 }
 
 .logo {
@@ -1158,7 +1162,41 @@ input[type="time"].sched-time {
         <div class="modal-field"><label>出発日</label><input class="f-inp" type="date" id="start-date" oninput="updateHdr();syncDays()"></div>
         <div class="modal-field"><label>帰着日</label><input class="f-inp" type="date" id="end-date" oninput="updateHdr();syncDays()"></div>
       </div>
-      <div class="modal-field"><label>メンバー</label><input class="f-inp" type="text" id="members" placeholder="例: 大人2名 子1名" oninput="updateHdr()"></div>
+      <div class="modal-field">
+        <label>メンバー</label>
+        <div id="members-input" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:6px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">大人</span>
+            <input class="f-inp" type="number" id="m-adult" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">高校生</span>
+            <input class="f-inp" type="number" id="m-hs" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">中学生</span>
+            <input class="f-inp" type="number" id="m-ms" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">小学生</span>
+            <input class="f-inp" type="number" id="m-es" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">未就学児</span>
+            <input class="f-inp" type="number" id="m-ps" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:0.8rem;color:var(--textsub);white-space:nowrap;min-width:56px;">0〜2歳</span>
+            <input class="f-inp" type="number" id="m-inf" min="0" value="0" style="width:52px;text-align:center;padding:4px;" oninput="updateHdr()">
+            <span style="font-size:0.8rem;color:var(--textsub);">人</span>
+          </div>
+        </div>
+      </div>
       <div class="modal-field"><label>宿泊先</label><input class="f-inp" type="text" id="hotel" placeholder="例: ○○ホテル" oninput="updateHdr()"></div>
       <div class="modal-field"><label>メモ</label><input class="f-inp" type="text" id="trip-memo" placeholder="例: 夏休み旅行"></div>
     </div>
@@ -1228,7 +1266,7 @@ function initFirebase() {
             document.getElementById('dest').value       = data.dest      || '';
             document.getElementById('start-date').value = data.startDate || '';
             document.getElementById('end-date').value   = data.endDate   || '';
-            document.getElementById('members').value    = data.members   || '';
+            setMembersFromText(data.members || '');
             document.getElementById('hotel').value      = data.hotel     || '';
             document.getElementById('trip-memo').value  = data.tripMemo  || '';
             updateHdr(); syncDays();
@@ -1308,6 +1346,48 @@ function closeModal(){ document.getElementById('modal').classList.remove('open')
 function closeOut(e){ if(e.target===document.getElementById('modal')) closeModal(); }
 
 // === HEADER / OVERVIEW BAR ===
+function setMembersFromText(text){
+  const cats = [
+    {id:'m-adult', label:'大人'},
+    {id:'m-hs',    label:'高校生'},
+    {id:'m-ms',    label:'中学生'},
+    {id:'m-es',    label:'小学生'},
+    {id:'m-ps',    label:'未就学児'},
+    {id:'m-inf',   label:'0〜2歳'},
+  ];
+  // まず全部0にリセット
+  cats.forEach(({id}) => {
+    const el = document.getElementById(id);
+    if(el) el.value = 0;
+  });
+  if(!text) return;
+  cats.forEach(({id, label}) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const m = text.match(new RegExp(label + '(\\d+)人'));
+    if(m) el.value = parseInt(m[1]);
+  });
+}
+
+function getMembersText(){
+  const cats = [
+    {id:'m-adult', label:'大人'},
+    {id:'m-hs',    label:'高校生'},
+    {id:'m-ms',    label:'中学生'},
+    {id:'m-es',    label:'小学生'},
+    {id:'m-ps',    label:'未就学児'},
+    {id:'m-inf',   label:'0〜2歳'},
+  ];
+  return cats
+    .map(({id,label}) => {
+      const el = document.getElementById(id);
+      const v = el ? parseInt(el.value)||0 : 0;
+      return v > 0 ? `${label}${v}人` : '';
+    })
+    .filter(Boolean)
+    .join('・');
+}
+
 function updateHdr(){
   const dest = document.getElementById('dest').value;
   const s    = document.getElementById('start-date').value;
@@ -1958,7 +2038,7 @@ async function openTrip(tripId, data) {
   document.getElementById('dest').value       = data.dest      || '';
   document.getElementById('start-date').value = data.startDate || '';
   document.getElementById('end-date').value   = data.endDate   || '';
-  document.getElementById('members').value    = data.members   || '';
+  setMembersFromText(data.members || '');
   document.getElementById('hotel').value      = data.hotel     || '';
   document.getElementById('trip-memo').value  = data.tripMemo  || '';
   updateHdr(); syncDays();
@@ -1989,7 +2069,7 @@ async function saveTrip() {
       dest:         document.getElementById('dest').value,
       startDate:    document.getElementById('start-date').value,
       endDate:      document.getElementById('end-date').value,
-      members:      document.getElementById('members').value,
+      members:      getMembersText(),
       hotel:        document.getElementById('hotel').value,
       tripMemo:     document.getElementById('trip-memo').value,
       scheduleData: schedData,
@@ -2109,7 +2189,7 @@ window.addEventListener('popstate', async e => {
         document.getElementById('dest').value       = data.dest      || '';
         document.getElementById('start-date').value = data.startDate || '';
         document.getElementById('end-date').value   = data.endDate   || '';
-        document.getElementById('members').value    = data.members   || '';
+        setMembersFromText(data.members || '');
         document.getElementById('hotel').value      = data.hotel     || '';
         document.getElementById('trip-memo').value  = data.tripMemo  || '';
         updateHdr(); syncDays();
