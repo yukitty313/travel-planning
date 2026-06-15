@@ -368,10 +368,10 @@ body {
 
 /* ===== 日程表 ===== */
 .day-scroll {
-  display: flex; gap: 7px;
+  display: flex; gap: 4px;
   overflow-x: auto;
-  padding: 2px 2px 8px;
-  margin-bottom: 6px;
+  padding: 2px 2px 0;
+  margin-bottom: 0;
   -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .day-scroll::-webkit-scrollbar { display: none; }
@@ -379,24 +379,29 @@ body {
 .day-chip {
   flex-shrink: 0;
   background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 50px;
-  padding: 8px 18px;
-  color: rgba(255,255,255,0.82);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 7px 16px 10px;
+  color: rgba(26,74,96,0.6);
   font-family: 'Nunito', sans-serif;
   font-size: 0.82rem; font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
-  min-height: 38px; display: flex; align-items: center;
+  min-height: 36px; display: flex; align-items: center;
+  position: relative;
+  z-index: 1;
 }
 .day-chip.active {
-  background: rgba(59,172,210,0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-color: rgba(255,255,255,0.3);
-  color: #fff;
-  box-shadow: 0 2px 12px rgba(59,172,210,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: var(--glassborder);
+  border-bottom: none;
+  color: var(--deep);
+  z-index: 3;
+  padding-bottom: 13px;
 }
 
 /* スケジュール行 */
@@ -1128,7 +1133,7 @@ input[type="time"].sched-time {
     <div class="day-scroll" id="day-selector">
       <div class="day-placeholder" style="padding:4px 0;opacity:0.6;font-size:0.78rem;color:#4a8aaa;white-space:nowrap;">出発日・帰着日を設定するとDayタブが表示されます</div>
     </div>
-    <div class="g-card">
+    <div class="g-card" id="sched-card" style="border-radius:0 var(--r) var(--r) var(--r);margin-top:0;position:relative;z-index:2;">
       <div class="sched-list" id="sched-list">
         <div class="empty"><div class="ico">🌅</div>予定を追加しよう</div>
       </div>
@@ -1464,12 +1469,26 @@ function renderDays(){
   const sel=document.getElementById('day-selector'); sel.innerHTML='';
   const sd=document.getElementById('start-date').value;
   for(let i=1;i<=totalDays;i++){
-    const c=document.createElement('div'); c.className='day-chip'+(i===curDay?' active':'');
+    const ch=document.createElement('div'); ch.className='day-chip'+(i===curDay?' active':'');
     let label=`Day ${i}`;
     if(sd){ const d=new Date(sd); d.setDate(d.getDate()+i-1); label=`${d.getMonth()+1}/${d.getDate()}`; }
-    c.textContent=label; c.onclick=()=>{curDay=i;renderDays();renderSched();};
-    sel.appendChild(c);
+    ch.textContent=label; ch.onclick=()=>{curDay=i;renderDays();renderSched();};
+    sel.appendChild(ch);
   }
+  // アクティブチップの左端位置に合わせてカード左上角を調整
+  requestAnimationFrame(()=>{
+    const card = document.getElementById('sched-card');
+    const activeChip = sel.querySelector('.day-chip.active');
+    if(!card || !activeChip) return;
+    const selRect  = sel.getBoundingClientRect();
+    const chipRect = activeChip.getBoundingClientRect();
+    const offsetL  = chipRect.left - selRect.left + sel.scrollLeft;
+    const chipW    = chipRect.width;
+    const r = getComputedStyle(document.documentElement).getPropertyValue('--r').trim() || '20px';
+    // チップが左端(0付近)なら左上を角なし、それ以外は角あり
+    const topLeft = offsetL < 4 ? '0' : r;
+    card.style.borderRadius = `${topLeft} ${r} ${r} ${r}`;
+  });
   renderSched();
 }
 
