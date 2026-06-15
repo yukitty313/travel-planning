@@ -27,26 +27,22 @@
   --text:   #1a4a60;
   --textsub:#4a8aaa;
   --r: 20px;
+  --app-width: 480px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-
-
 /* ① 背景が切れないよう html/body 両方に固定背景 */
 html {
   min-height: 100%;
-  /* ④ background-color を末端色に合わせることで上下余白の白切れを防止 */
   background-color: #1a7aa8;
   background-image: linear-gradient(170deg,
     var(--sky1) 0%, var(--sky2) 28%,
     var(--sea1) 60%, var(--sea2) 82%,
     var(--deep) 100%);
   background-attachment: fixed;
-  background-size: 100% 100vh; /* iOS では fixed が効かないため 100vh で固定 */
+  background-size: 100% 100vh;
 }
-/* iOS Safari では background-attachment:fixed が効かないので
-   ::before 擬似要素で固定背景を再現 */
 html::before {
   content: '';
   position: fixed;
@@ -57,30 +53,52 @@ html::before {
     #5bbfe0 60%, #2ea3cc 82%,
     #1a7aa8 100%);
 }
+
+/* PC表示時の両サイド装飾 */
+@media (min-width: 520px) {
+  html::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at 15% 35%, rgba(255,255,255,0.22) 0%, transparent 48%),
+      radial-gradient(ellipse at 85% 72%, rgba(26,122,168,0.18) 0%, transparent 48%);
+    pointer-events: none;
+  }
+}
+
 body {
   font-family: 'Noto Sans JP', sans-serif;
   min-height: 100dvh;
-  background: transparent; /* htmlの背景を透過して見せる */
+  background: transparent;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 /* ===== HEADER ===== */
+/* PC・スマホ共通：最大幅480pxで中央寄せ */
 .hdr {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   z-index: 100;
+  width: 100%;
+  max-width: var(--app-width);
   background: rgba(255,255,255,0.52);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255,255,255,0.7);
-  box-shadow: 0 2px 20px rgba(30,120,170,0.1);
-  /* safe-area をpadding-topで吸収 */
+  border: 1px solid rgba(255,255,255,0.7);
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 4px 32px rgba(30,120,170,0.18);
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* ② タイトル行 */
+/* タイトル行 */
 .hdr-top {
   display: flex;
   align-items: center;
@@ -89,7 +107,6 @@ body {
   gap: 8px;
 }
 
-/* ① タイトル変更・小さめ */
 .logo {
   font-family: 'Nunito', sans-serif;
   font-size: 1.05rem;
@@ -105,7 +122,7 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* ② 概要バー（タイトル直下） */
+/* 概要バー */
 .overview-bar {
   margin: 0;
   background: rgba(255,255,255,0.45);
@@ -149,7 +166,6 @@ body {
   text-overflow: ellipsis;
   flex: 1;
 }
-/* 旧クラスは不要になったが念のため残す */
 .ov-left, .ov-right, .ov-members, .ov-hotel, .ov-edit { display: none; }
 
 .btn-pdf {
@@ -170,7 +186,7 @@ body {
 }
 .btn-pdf:active { transform: scale(0.95); }
 
-/* ⑤ タブ：ガラス調 */
+/* タブ：ガラス調 */
 .tab-bar {
   display: flex;
   padding: 8px 14px 10px;
@@ -206,12 +222,14 @@ body {
 }
 .tab-btn .t-ico { font-size: 0.95rem; }
 
-/* ===== ヘッダー高さ計算用変数 ===== */
-/* JS で動的に設定するが CSS fallback */
+/* ===== スクロールエリア：中央寄せ ===== */
 .scroll-area {
   padding-top: 148px; /* fallback: JS で上書き */
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
   min-height: 100dvh;
+  max-width: var(--app-width);
+  margin-left: auto;
+  margin-right: auto;
   padding-left: 14px;
   padding-right: 14px;
 }
@@ -260,7 +278,6 @@ body {
   padding: 4px 2px;
   width: 100%;
   transition: border-color 0.18s;
-  /* ③ 高さ揃えのため line-height 統一 */
   line-height: 1.5;
 }
 .l-inp::placeholder { color: rgba(30,100,140,0.32); }
@@ -315,7 +332,7 @@ body {
   border: 1.5px solid rgba(255,255,255,0.8);
   border-radius: 28px 28px 0 0;
   padding: 18px 18px calc(32px + env(safe-area-inset-bottom,0px));
-  width: 100%; max-width: 480px;
+  width: 100%; max-width: var(--app-width);
   animation: su .28s cubic-bezier(.34,1.3,.64,1);
   max-height: 90dvh;
   overflow-y: auto;
@@ -340,7 +357,6 @@ body {
 .btn-done:active { opacity: 0.85; }
 
 /* ===== 日程表 ===== */
-/* ④ Day チップ：カード内に収めてヘッダー被りを回避 */
 .day-scroll {
   display: flex; gap: 7px;
   overflow-x: auto;
@@ -374,7 +390,6 @@ body {
 /* スケジュール行 */
 .sched-list { display: flex; flex-direction: column; gap: 9px; }
 
-/* 通常表示（閲覧モード）*/
 .sched-item {
   background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.75);
@@ -387,7 +402,6 @@ body {
   align-items: start;
 }
 
-/* 時刻input */
 input[type="time"].sched-time {
   color: var(--sea2);
   font-weight: 600;
@@ -402,7 +416,6 @@ input[type="time"].sched-time {
   width: 100%;
   display: block;
 }
-/* 閲覧モード：時刻表示span */
 .sched-time-view {
   color: var(--sea2);
   font-family: 'Nunito', sans-serif;
@@ -414,7 +427,6 @@ input[type="time"].sched-time {
   white-space: nowrap;
 }
 
-/* 予定テキストエリア */
 .sched-ta {
   resize: none;
   height: 36px;
@@ -426,7 +438,6 @@ input[type="time"].sched-time {
   display: block;
   font-size: 16px;
 }
-/* 閲覧モード：予定表示div */
 .sched-content-view {
   font-size: 16px;
   color: var(--text);
@@ -437,7 +448,6 @@ input[type="time"].sched-time {
   white-space: pre-wrap;
 }
 
-/* メモ欄（📝ボタンで展開） */
 .sched-memo-wrap {
   grid-column: 1 / -1;
   margin-top: 4px;
@@ -459,7 +469,6 @@ input[type="time"].sched-time {
   outline: none;
 }
 .sched-memo-ta::placeholder { color: rgba(30,100,140,0.35); }
-/* 閲覧モード：メモ表示 */
 .sched-memo-view {
   background: rgba(255,255,255,0.28);
   border: 1px dashed rgba(30,120,170,0.25);
@@ -472,7 +481,6 @@ input[type="time"].sched-time {
   word-break: break-all;
 }
 
-/* 右ボタン列 */
 .sched-btns {
   display: flex;
   flex-direction: column;
@@ -494,7 +502,6 @@ input[type="time"].sched-time {
 
 .add-center { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
 
-/* 編集モード中はカード全体に薄い枠 */
 .sched-edit-mode .sched-item {
   background: rgba(255,255,255,0.62);
   border-color: rgba(30,120,170,0.3);
@@ -688,7 +695,7 @@ input[type="time"].sched-time {
 
 /* ========== グループ画面 ========== */
 .group-wrap {
-  max-width: 480px; margin: 0 auto;
+  max-width: var(--app-width); margin: 0 auto;
   padding: 60px 16px 40px;
   min-height: 100dvh;
 }
@@ -762,11 +769,22 @@ input[type="time"].sched-time {
 }
 
 /* ========== 旅行一覧画面 ========== */
+/* trips-header も中央寄せ */
 .trips-header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--app-width);
+  z-index: 100;
   background: rgba(255,255,255,0.52);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.7);
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 4px 32px rgba(30,120,170,0.18);
   padding: env(safe-area-inset-top,0px) 14px 10px;
   display: flex; align-items: center; justify-content: space-between;
   padding-top: calc(env(safe-area-inset-top,0px) + 10px);
@@ -786,8 +804,8 @@ input[type="time"].sched-time {
   color: var(--deep);
 }
 .trips-wrap {
-  max-width: 480px; margin: 0 auto;
-  padding: 72px 16px 40px;
+  max-width: var(--app-width); margin: 0 auto;
+  padding: 80px 16px 40px;
   min-height: 100dvh;
 }
 .trip-item {
@@ -1070,13 +1088,12 @@ input[type="time"].sched-time {
 
 <script>
 // ============================================================
-// Firebase 初期化（compat版）- DOMContentLoaded後に確実に実行
+// Firebase 初期化（compat版）
 // ============================================================
 let _auth, _db;
 
 function initFirebase() {
   if (typeof firebase === 'undefined') {
-    // まだ読み込まれていない場合は少し待つ
     setTimeout(initFirebase, 100);
     return;
   }
@@ -1093,7 +1110,6 @@ function initFirebase() {
   _auth = firebase.auth();
   _db   = firebase.firestore();
 
-  // 認証状態の監視
   _auth.onAuthStateChanged(async user => {
     if (user) {
       window._currentUser = user;
@@ -1111,7 +1127,6 @@ function initFirebase() {
         await userRef.update({ displayName: user.displayName });
       }
 
-      // localStorageから前回の画面を復元
       const lastScreen    = localStorage.getItem('lastScreen')    || 'group';
       const lastGroupId   = localStorage.getItem('lastGroupId')   || '';
       const lastGroupName = localStorage.getItem('lastGroupName') || '';
@@ -1119,7 +1134,6 @@ function initFirebase() {
       const lastTripName  = localStorage.getItem('lastTripName')  || '';
 
       if (lastScreen === 'app' && lastTripId && lastGroupId) {
-        // 旅行詳細画面を復元
         _currentGroupId   = lastGroupId;
         _currentGroupName = lastGroupName;
         _currentTripId    = lastTripId;
@@ -1138,7 +1152,6 @@ function initFirebase() {
             document.getElementById('hotel').value      = data.hotel     || '';
             document.getElementById('trip-memo').value  = data.tripMemo  || '';
             updateHdr(); syncDays();
-            // 持ち物サブコレクション
             const uid = user.uid;
             const uSnap = await _db.collection('users').doc(uid).get();
             _myFamilyName = uSnap.exists ? (uSnap.data().familyName || '') : '';
@@ -1160,7 +1173,6 @@ function initFirebase() {
         }
 
       } else if (lastScreen === 'trips' && lastGroupId) {
-        // 旅行一覧画面を復元
         _currentGroupId   = lastGroupId;
         _currentGroupName = lastGroupName;
         document.getElementById('trips-group-name').textContent = lastGroupName;
@@ -1168,7 +1180,6 @@ function initFirebase() {
         loadTrips();
 
       } else {
-        // グループ選択画面
         showScreen('group');
         loadGroups();
       }
@@ -1188,8 +1199,8 @@ function initFirebase() {
 // === STATE ===
 let curDay=1, totalDays=1;
 let schedData={}, packItems=[], spots=[], catFilter='all';
-let _myFamilyName = '';  // 自分の苗字
-let _currentTripPackingRef = null;  // Firestoreの持ち物参照
+let _myFamilyName = '';
+let _currentTripPackingRef = null;
 
 const SPOT_ACCENTS=[
   'linear-gradient(90deg,#5bbfe0,#2ea3cc)',
@@ -1198,9 +1209,9 @@ const SPOT_ACCENTS=[
   'linear-gradient(90deg,#74c8e8,#2ea3cc)',
   'linear-gradient(90deg,#aae8f8,#5bbfe0)',
 ];
-const SPOT_TYPES=[]; // 種別タグ廃止
+const SPOT_TYPES=[];
 
-// ⑥ ヘッダー高さを動的に取得してscroll-areaのpadding-topを調整
+// ヘッダー高さを動的に取得してscroll-areaのpadding-topを調整
 function adjustScrollPadding() {
   const hdr = document.getElementById('hdr');
   const sa = document.getElementById('scroll-area');
@@ -1208,9 +1219,7 @@ function adjustScrollPadding() {
     sa.style.paddingTop = (hdr.offsetHeight + 8) + 'px';
   }
 }
-// 初期化時・リサイズ時に調整
 window.addEventListener('resize', adjustScrollPadding);
-// フォント読み込み後に再調整
 document.fonts.ready.then(adjustScrollPadding);
 
 // === MODAL ===
@@ -1261,27 +1270,22 @@ function renderDays(){
   renderSched();
 }
 
-// URL を <a> タグに変換するユーティリティ
 function linkify(text) {
   if (!text) return '';
-  // HTML エスケープ
   const escaped = text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // URL を検出してリンク化
   return escaped.replace(
     /(https?:\/\/[^\s　、。，．「」<>"]+)/g,
     '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:var(--sea2);text-decoration:underline;word-break:break-all;">$1</a>'
   );
 }
 
-// 入力debounce（連続入力の最後だけFirestoreに保存）
 let _saveTripTimer = null;
 function saveTripDebounced() {
   clearTimeout(_saveTripTimer);
   _saveTripTimer = setTimeout(() => saveTrip(), 1500);
 }
 
-// 編集モード状態
 let schedEditMode = false;
 
 function toggleEditMode() {
@@ -1297,7 +1301,6 @@ function toggleEditMode() {
     btn.textContent = '✏️ 編集';
     btn.style.background = 'rgba(46,163,204,0.18)';
     btn.style.borderColor = 'rgba(46,163,204,0.45)';
-    // 編集完了時にFirestoreへ保存
     saveTrip();
   }
   renderSched();
@@ -1333,7 +1336,6 @@ function toggleMemo(day, idx) {
 
 function renderSched(){
   const list=document.getElementById('sched-list'), items=schedData[curDay]||[];
-  // 編集ボタンの表示制御
   const addBtn = document.getElementById('btn-add-sched');
   if(addBtn) addBtn.style.display = schedEditMode ? 'flex' : 'none';
 
@@ -1349,7 +1351,6 @@ function renderSched(){
     d.className = 'sched-item';
 
     if (schedEditMode) {
-      // ── 編集モード ──
       d.innerHTML = `
         <input class="l-inp sched-time" type="time" value="${item.time||''}"
           oninput="schedData[${curDay}][${idx}].time=this.value;saveTripDebounced()">
@@ -1365,7 +1366,6 @@ function renderSched(){
         </div>` : (item.memo ? `<div class="sched-memo-wrap"><div class="sched-memo-view">${item.memo}</div></div>` : '')}
       `;
     } else {
-      // ── 閲覧モード ──
       const timeLabel = item.time || '──:──';
       const contentHtml = item.content ? linkify(item.content) : '<span style="color:rgba(30,100,140,0.35)">（予定なし）</span>';
       const memoHtml = item.memo ? linkify(item.memo) : '';
@@ -1432,11 +1432,11 @@ function addPack(){
 }
 
 // === SPOTS ===
-let spotEditMode = {}; // {idx: true/false} で編集状態管理
+let spotEditMode = {};
 
 function addSpot(){
   spots.push({name:'',address:'',memo:''});
-  spotEditMode[spots.length-1] = true; // 追加時は即編集モード
+  spotEditMode[spots.length-1] = true;
   renderSpots();
   saveTrip();
 }
@@ -1444,14 +1444,13 @@ function addSpot(){
 function toggleSpotEdit(idx) {
   spotEditMode[idx] = !spotEditMode[idx];
   renderSpots();
-  if (!spotEditMode[idx]) saveTrip(); // 編集完了時に保存
+  if (!spotEditMode[idx]) saveTrip();
 }
 
 function copyAddress(idx) {
   const addr = spots[idx].address;
   if (!addr) { alert('住所が入力されていません'); return; }
   navigator.clipboard.writeText(addr).then(() => {
-    // コピー完了フィードバック
     const btn = document.querySelector(`[data-copy-idx="${idx}"]`);
     if (btn) {
       btn.textContent = '✅ コピー済';
@@ -1462,7 +1461,6 @@ function copyAddress(idx) {
       }, 2000);
     }
   }).catch(() => {
-    // fallback
     const ta = document.createElement('textarea');
     ta.value = addr;
     document.body.appendChild(ta);
@@ -1483,7 +1481,6 @@ function renderSpots(){
     const isEdit = spotEditMode[idx] === true;
 
     if (isEdit) {
-      // ── 編集モード ──
       d.innerHTML=`
         <div class="spot-accent" style="background:${acc}"></div>
         <input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}"
@@ -1498,7 +1495,6 @@ function renderSpots(){
             style="background:rgba(46,163,204,0.15);border-color:rgba(46,163,204,0.35);color:var(--deep);">✅ 完了</button>
         </div>`;
     } else {
-      // ── 閲覧モード ──
       const nameHtml  = sp.name    || '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
       const addrHtml  = sp.address || '<span style="color:rgba(30,100,140,0.35)">住所未入力</span>';
       const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${sp.memo}</div>` : '';
@@ -1522,7 +1518,6 @@ function renderSpots(){
 function delSpot(idx){
   if(!confirm('このスポットを削除しますか？')) return;
   spots.splice(idx,1);
-  // spotEditModeのインデックスを再構築
   const newMode = {};
   Object.keys(spotEditMode).forEach(k => {
     const ki = parseInt(k);
@@ -1585,7 +1580,7 @@ async function exportPDF(){
 
 
 // ============================================================
-// 画面管理（window経由でmoduleスクリプトからも呼べるよう公開）
+// 画面管理
 // ============================================================
 window.showScreen = function showScreen(name, pushHistory = true) {
   document.querySelectorAll('.screen').forEach(s => {
@@ -1596,7 +1591,6 @@ window.showScreen = function showScreen(name, pushHistory = true) {
   if (el) { el.style.display = 'block'; el.classList.add('active'); }
   if (name === 'app') requestAnimationFrame(adjustScrollPadding);
 
-  // login以外の画面は状態を保存
   if (name !== 'login') {
     localStorage.setItem('lastScreen',    name);
     localStorage.setItem('lastGroupId',   _currentGroupId   || '');
@@ -1605,7 +1599,6 @@ window.showScreen = function showScreen(name, pushHistory = true) {
     localStorage.setItem('lastTripName',  _currentTripName  || '');
   }
 
-  // ブラウザ履歴に積む（popstateから呼ばれた時は積まない）
   if (pushHistory) {
     const state = {
       screen:    name,
@@ -1614,7 +1607,6 @@ window.showScreen = function showScreen(name, pushHistory = true) {
       tripId:    _currentTripId    || '',
       tripName:  _currentTripName  || '',
     };
-    // login は履歴に積まない
     if (name !== 'login') {
       history.pushState(state, '', '#' + name);
     } else {
@@ -1675,7 +1667,6 @@ async function registerEmail() {
     await cred.user.updateProfile({ displayName });
     await cred.user.reload();
     window._currentUser = _auth.currentUser;
-    // Firestoreにfamily名を保存（onAuthStateChangedより前に確実に書き込む）
     await _db.collection('users').doc(cred.user.uid).set({
       displayName,
       familyName: family,
@@ -1695,7 +1686,6 @@ async function doSignOut() {
   localStorage.removeItem('lastGroupName');
   localStorage.removeItem('lastTripId');
   localStorage.removeItem('lastTripName');
-  // ブラウザ履歴もリセット
   history.replaceState(null, '', location.pathname);
   await _auth.signOut();
 }
@@ -1710,7 +1700,6 @@ window.loadGroups = async function loadGroups() {
   if (!window._currentUser) return;
   const uid = window._currentUser.uid;
 
-  // usersコレクションから最新情報取得
   const userSnap = await _db.collection('users').doc(uid).get();
   const userData = userSnap.exists ? userSnap.data() : {};
   const isAdmin = userData.isAdmin === true;
@@ -1813,7 +1802,6 @@ async function loadTrips() {
       div.className = 'trip-item';
       const date = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString('ja-JP') : '';
       const dest = d.dest ? ` · ${d.dest}` : '';
-      // innerHTML内にJSを書くと特殊文字で壊れるのでDOM操作で実装
       const left = document.createElement('div');
       left.style.cssText = 'flex:1;min-width:0;';
       left.innerHTML = `
@@ -1879,12 +1867,10 @@ async function openTrip(tripId, data) {
   document.getElementById('trip-memo').value  = data.tripMemo  || '';
   updateHdr(); syncDays();
 
-  // 自分の苗字をusersから取得して持ち物をロード
   const uid = window._currentUser.uid;
   const userSnap = await _db.collection('users').doc(uid).get();
   _myFamilyName = userSnap.exists ? (userSnap.data().familyName || '') : '';
 
-  // 持ち物はサブコレクション trips/{id}/packing/{familyName}
   _currentTripPackingRef = _db
     .collection('trips').doc(_currentTripId)
     .collection('packing').doc(_myFamilyName || uid);
@@ -1894,12 +1880,10 @@ async function openTrip(tripId, data) {
 
   showScreen('app');
   renderDays(); renderPack(); renderSpots();
-  // 家庭名をパネルに表示
   const famLabel = document.getElementById('family-label');
   if (famLabel) famLabel.textContent = _myFamilyName ? `${_myFamilyName}家 の持ち物` : '持ち物リスト';
 }
 
-// Firestoreへの保存（旅行本体）
 async function saveTrip() {
   if (!_currentTripId || !_currentGroupId) return;
   try {
@@ -1922,7 +1906,6 @@ async function saveTrip() {
   }
 }
 
-// 持ち物をサブコレクションに保存
 async function savePacking() {
   if (!_currentTripPackingRef) return;
   try {
@@ -1945,7 +1928,6 @@ function openRenameModal(tripId, currentName) {
   _renameTripId = tripId;
   document.getElementById('rename-input').value = currentName;
   document.getElementById('rename-overlay').classList.add('open');
-  // 少し待ってからフォーカス（モーダルアニメーション後）
   setTimeout(() => document.getElementById('rename-input').focus(), 100);
 }
 
@@ -1963,12 +1945,11 @@ async function submitRename() {
       name: newName,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    // 現在開いている旅行なら変数も更新
     if (_currentTripId === _renameTripId) {
       _currentTripName = newName;
     }
     closeRenameModal();
-    loadTrips(); // 一覧を再描画
+    loadTrips();
   } catch(e) {
     console.error('rename error:', e);
     alert('変更に失敗しました');
@@ -1976,16 +1957,14 @@ async function submitRename() {
 }
 
 // ============================================================
-// 現在の画面をリロード（画面は変えずにデータだけ再取得）
+// リロード
 // ============================================================
 function reloadCurrentScreen() {
-  // スピンアニメを少し見せてからリロード
   const btns = document.querySelectorAll('.btn-reload');
   btns.forEach(b => b.classList.add('spinning'));
   setTimeout(() => location.reload(), 400);
 }
 
-// アプリ画面の「← グループ」ボタン用
 function backToTrips() {
   window.showScreen('trips');
   loadTrips();
@@ -1997,7 +1976,6 @@ function backToTrips() {
 window.addEventListener('popstate', async e => {
   const state = e.state;
   if (!state || !state.screen) {
-    // stateがない = 最初のページ → ログイン or グループへ
     if (window._currentUser) {
       window.showScreen('group', false);
       loadGroups();
@@ -2026,7 +2004,6 @@ window.addEventListener('popstate', async e => {
     _currentTripId    = tripId;
     _currentTripName  = tripName;
     document.getElementById('trips-group-name').textContent = groupName;
-    // 旅行データを再取得して表示
     try {
       const tripSnap = await _db.collection('trips').doc(tripId).get();
       if (tripSnap.exists) {
@@ -2065,11 +2042,8 @@ window.addEventListener('popstate', async e => {
 });
 
 // === INIT ===
-// 初期表示はlogin
 window.showScreen('login');
-// Firebase初期化（SDKロード確認後に実行）
 initFirebase();
-// ⑥ DOM描画後にヘッダー高さを計測してpadding調整
 requestAnimationFrame(adjustScrollPadding);
 </script>
 </div><!-- /screen-app -->
