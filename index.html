@@ -636,10 +636,10 @@ input[type="time"].sched-time {
 .spot-sub-tab {
   flex: 1;
   padding: 7px 4px;
-  border: 1.5px solid rgba(30,120,170,0.22);
+  border: 1.5px solid rgba(30,120,170,0.35);
   border-radius: 20px;
-  background: rgba(30,120,170,0.06);
-  color: var(--textsub);
+  background: rgba(255,255,255,0.45);
+  color: var(--deep);
   font-size: 0.8rem;
   font-weight: 700;
   font-family: 'Nunito', sans-serif;
@@ -1827,8 +1827,8 @@ function renderSpots(){
         <div class="spot-accent" style="background:${acc}"></div>
         <textarea class="l-inp spot-name-inp" placeholder="スポット名" rows="2"
           oninput="spots[${idx}].name=this.value;saveTripDebounced()">${sp.name}</textarea>
-        <input class="l-inp spot-addr-inp" type="text" placeholder="住所" value="${sp.address}"
-          oninput="spots[${idx}].address=this.value;saveTripDebounced()">
+        <textarea class="l-inp spot-addr-inp" placeholder="住所" rows="2"
+          oninput="spots[${idx}].address=this.value;saveTripDebounced()">${sp.address}</textarea>
         <input class="l-inp" type="url" placeholder="GoogleマップURL" value="${sp.gmap||''}"
           oninput="spots[${idx}].gmap=this.value;saveTripDebounced()">
         <textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）"
@@ -1945,8 +1945,8 @@ function renderHotels() {
         <div class="spot-accent" style="background:linear-gradient(90deg,#5bbfe0,#2ea3cc)"></div>
         <textarea class="l-inp spot-name-inp" placeholder="宿泊先名（例: ○○ホテル）" rows="2"
           oninput="hotelItems[${idx}].name=this.value;saveTripDebounced()">${h.name}</textarea>
-        <input class="l-inp spot-addr-inp" type="text" placeholder="住所" value="${h.address}"
-          oninput="hotelItems[${idx}].address=this.value;saveTripDebounced()">
+        <textarea class="l-inp spot-addr-inp" placeholder="住所" rows="2"
+          oninput="hotelItems[${idx}].address=this.value;saveTripDebounced()">${h.address}</textarea>
         <input class="l-inp" type="url" placeholder="GoogleマップURL" value="${h.gmap||''}"
           oninput="hotelItems[${idx}].gmap=this.value;saveTripDebounced()">
         <textarea class="l-inp spot-memo-inp" placeholder="メモ（チェックイン時間・連絡先など）"
