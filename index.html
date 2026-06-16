@@ -261,10 +261,10 @@ body {
 
 /* ===== GLASS CARD ===== */
 .g-card {
-  background: var(--glass);
+  background: rgba(255,255,255,0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid var(--glassborder);
+  border: 1.5px solid rgba(255,255,255,0.88);
   border-radius: var(--r);
   padding: 16px;
   box-shadow: var(--shadow);
@@ -939,8 +939,8 @@ input[type="time"].sched-time {
   min-height: 100dvh;
 }
 .trip-item {
-  background: rgba(255,255,255,0.48);
-  border: 1.5px solid rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.72);
+  border: 1.5px solid rgba(255,255,255,0.88);
   border-radius: 16px; padding: 14px 16px;
   margin-bottom: 10px;
   display: flex; align-items: center; justify-content: space-between;
@@ -1840,9 +1840,9 @@ function renderSpots(){
         </div>`;
     } else {
       const nameHtml  = sp.name    ? `<div style="white-space:pre-wrap;">${sp.name}</div>` : '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
-      const addrHtml  = sp.address ? `<div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${sp.address}</div>` : '';
+      const addrHtml  = sp.address ? `<div style="font-size:0.82rem;color:var(--text);padding:2px;white-space:pre-wrap;">${sp.address}</div>` : '';
       const gmapHtml  = sp.gmap    ? `<div style="font-size:0.8rem;margin-top:4px;"><span style="color:var(--textsub);font-weight:600;">【Googleマップ】</span><br>${linkify(sp.gmap)}</div>` : '';
-      const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${linkify(sp.memo)}</div>` : '';
+      const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:rgba(20,60,90,0.65);margin-top:6px;line-height:1.5;">${linkify(sp.memo)}</div>` : '';
       const isFirst = idx === 0;
       const isLast  = idx === spots.length - 1;
       d.innerHTML=`
@@ -1958,9 +1958,9 @@ function renderHotels() {
         </div>`;
     } else {
       const nameHtml = h.name ? `<div style="white-space:pre-wrap;">${h.name}</div>` : '<span style="color:rgba(30,100,140,0.35)">宿泊先名未入力</span>';
-      const addrHtml = h.address ? `<div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${h.address}</div>` : '';
+      const addrHtml = h.address ? `<div style="font-size:0.82rem;color:var(--text);padding:2px;white-space:pre-wrap;">${h.address}</div>` : '';
       const gmapHtml = h.gmap    ? `<div style="font-size:0.8rem;margin-top:4px;"><span style="color:var(--textsub);font-weight:600;">【Googleマップ】</span><br>${linkify(h.gmap)}</div>` : '';
-      const memoHtml = h.memo ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.6;">${linkify(h.memo)}</div>` : '';
+      const memoHtml = h.memo ? `<div style="font-size:0.8rem;color:rgba(20,60,90,0.65);margin-top:6px;line-height:1.6;">${linkify(h.memo)}</div>` : '';
       d.innerHTML = `
         <div class="spot-accent" style="background:linear-gradient(90deg,#5bbfe0,#2ea3cc)"></div>
         <div style="font-size:16px;font-weight:600;color:var(--text);padding:4px 2px 2px;">🏨 ${nameHtml}</div>
