@@ -1746,7 +1746,7 @@ function addPack(){
 let spotEditMode = {};
 
 function addSpot(){
-  spots.push({name:'',address:'',memo:''});
+  spots.push({name:'',address:'',gmap:'',memo:''});
   spotEditMode[spots.length-1] = true;
   renderSpots();
   saveTrip();
@@ -1814,10 +1814,12 @@ function renderSpots(){
     if (isEdit) {
       d.innerHTML=`
         <div class="spot-accent" style="background:${acc}"></div>
-        <input class="l-inp spot-name-inp" type="text" placeholder="スポット名" value="${sp.name}"
-          oninput="spots[${idx}].name=this.value;saveTripDebounced()">
-        <input class="l-inp spot-addr-inp" type="text" placeholder="住所（マップアプリ用）" value="${sp.address}"
+        <textarea class="l-inp spot-name-inp" placeholder="スポット名" rows="2"
+          oninput="spots[${idx}].name=this.value;saveTripDebounced()">${sp.name}</textarea>
+        <input class="l-inp spot-addr-inp" type="text" placeholder="住所" value="${sp.address}"
           oninput="spots[${idx}].address=this.value;saveTripDebounced()">
+        <input class="l-inp" type="url" placeholder="GoogleマップURL" value="${sp.gmap||''}"
+          oninput="spots[${idx}].gmap=this.value;saveTripDebounced()">
         <textarea class="l-inp spot-memo-inp" placeholder="メモ（営業時間・料金など）"
           oninput="spots[${idx}].memo=this.value;saveTripDebounced()">${sp.memo}</textarea>
         <div class="spot-foot">
@@ -1826,15 +1828,17 @@ function renderSpots(){
             style="background:rgba(46,163,204,0.15);border-color:rgba(46,163,204,0.35);color:var(--deep);">✅ 完了</button>
         </div>`;
     } else {
-      const nameHtml  = sp.name    || '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
-      const addrHtml  = sp.address || '<span style="color:rgba(30,100,140,0.35)">住所未入力</span>';
+      const nameHtml  = sp.name    ? `<div style="white-space:pre-wrap;">${sp.name}</div>` : '<span style="color:rgba(30,100,140,0.35)">スポット名未入力</span>';
+      const addrHtml  = sp.address ? `<div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${sp.address}</div>` : '';
+      const gmapHtml  = sp.gmap    ? `<div style="font-size:0.8rem;margin-top:4px;"><span style="color:var(--textsub);font-weight:600;">【Googleマップ】</span><br>${linkify(sp.gmap)}</div>` : '';
       const memoHtml  = sp.memo    ? `<div style="font-size:0.8rem;color:var(--textsub);margin-top:6px;line-height:1.5;">${linkify(sp.memo)}</div>` : '';
       const isFirst = idx === 0;
       const isLast  = idx === spots.length - 1;
       d.innerHTML=`
         <div class="spot-accent" style="background:${acc}"></div>
         <div style="font-size:16px;font-weight:600;color:var(--text);padding:4px 2px 2px;">${nameHtml}</div>
-        <div style="font-size:0.82rem;color:var(--textsub);padding:2px;">${addrHtml}</div>
+        ${addrHtml}
+        ${gmapHtml}
         ${memoHtml}
         <div class="spot-foot">
           <div class="spot-foot-right">
@@ -1889,7 +1893,7 @@ function switchSpotTab(tab, btn) {
 let hotelEditMode = {};
 
 function addHotel() {
-  hotelItems.push({name:'', address:'', memo:''});
+  hotelItems.push({name:'', address:'', gmap:'', memo:''});
   hotelEditMode[hotelItems.length-1] = true;
   renderHotels();
 }
