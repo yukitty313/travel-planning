@@ -865,8 +865,17 @@ input[type="time"].sched-time {
   cursor: pointer;
 }
 .user-hello {
-  color: rgba(255,255,255,0.7);
-  font-size: 0.78rem; margin-bottom: 18px;
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 18px;
 }
 .group-item {
   background: rgba(255,255,255,0.72);
@@ -1082,7 +1091,7 @@ input[type="time"].sched-time {
       <div class="add-center"><button class="btn-add" onclick="joinGroup()">グループに参加</button></div>
     </div>
 
-    <div class="card-head" style="color:white;margin:16px 4px 8px;font-size:0.9rem;">参加中のグループ</div>
+    <div class="card-head" style="display:inline-block;background:rgba(255,255,255,0.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.45);border-radius:20px;padding:4px 14px;color:white;font-weight:700;margin:16px 4px 8px;font-size:0.9rem;">参加中のグループ</div>
     <div id="group-list"><div class="empty"><div class="ico">👥</div>グループがありません</div></div>
   </div>
 </div>
@@ -1100,7 +1109,7 @@ input[type="time"].sched-time {
       <input class="f-inp" type="text" id="new-trip-name" placeholder="旅行名（例：沖縄旅行2025）" style="margin-bottom:10px;">
       <div class="add-center"><button class="btn-add" onclick="createTrip()">＋ 旅行を作成</button></div>
     </div>
-    <div class="card-head" style="color:white;margin:4px 4px 8px;font-size:0.9rem;">旅行の履歴</div>
+    <div class="card-head" style="display:inline-block;background:rgba(255,255,255,0.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.45);border-radius:20px;padding:4px 14px;color:white;font-weight:700;margin:4px 4px 8px;font-size:0.9rem;">旅行の履歴</div>
     <div id="trip-list"><div class="empty"><div class="ico">✈️</div>旅行がありません</div></div>
   </div>
 </div>
