@@ -202,14 +202,18 @@ body {
   border-radius: 50px;
   margin: 6px 14px 0;
   padding: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.tab-bar::-webkit-scrollbar { display: none; }
 .tab-btn {
-  flex: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 8px 4px;
+  padding: 8px 16px;
   border: 1px solid rgba(30,120,170,0.18);
   border-radius: 40px;
   font-family: 'Nunito', sans-serif;
@@ -2000,6 +2004,7 @@ function showTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
   btn.classList.add('active');
+  btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   window.scrollTo({top:0});
 }
 
